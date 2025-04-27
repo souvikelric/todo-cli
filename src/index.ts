@@ -23,10 +23,19 @@ function loadTodos(path: string) {
   return todos;
 }
 
+function saveTodos(todos: Todo[]) {
+  fs.writeFileSync(dataPath, JSON.stringify(todos, null, 2));
+}
+
 async function addTodo(): Promise<void> {
   const answers = await inquirer.prompt([
     { name: "name", message: "Todo name:", type: "input" },
-    { name: "date", message: "Date (YYYY-MM-DD):", type: "input" },
+    {
+      name: "date",
+      message: "Date (YYYY-MM-DD):",
+      type: "input",
+      default: Date.now().toLocaleString(),
+    },
     { name: "time", message: "Time (HH:MM):", type: "input" },
     {
       type: "list",
@@ -36,6 +45,12 @@ async function addTodo(): Promise<void> {
     },
     { name: "tag", message: "Tag (optional):", type: "input", default: "" },
   ]);
+
+  const todos = loadTodos(dataPath);
+  todos.push(answers as Todo);
+  saveTodos(todos);
+
+  console.log(chalk.green("\n✅ Todo added successfully!\n"));
 }
 
 function listTodos(): void {
@@ -48,8 +63,11 @@ function listTodos(): void {
   console.table(todos);
 }
 
-listTodos();
 let args = process.argv.slice(2);
 if (args.length > 0 && args[0] === "add") {
   addTodo();
+} else if (args.length > 0 && args[0] === "list") {
+  listTodos();
+} else {
+  console.log(chalk.red("❌ Please add a command like list or add"));
 }

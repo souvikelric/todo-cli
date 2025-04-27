@@ -34,9 +34,14 @@ async function addTodo(): Promise<void> {
       name: "date",
       message: "Date (YYYY-MM-DD):",
       type: "input",
-      default: Date.now().toLocaleString(),
+      default: String(new Date().toLocaleString().slice(0, 10)),
     },
-    { name: "time", message: "Time (HH:MM):", type: "input" },
+    {
+      name: "time",
+      message: "Time (HH:MM):",
+      type: "input",
+      default: new Date().toLocaleString().slice(12, 17),
+    },
     {
       type: "list",
       name: "priority",

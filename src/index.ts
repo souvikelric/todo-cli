@@ -1,4 +1,4 @@
-#!/env/node
+#!/usr/bin/env node
 import chalk from "chalk";
 import inquirer from "inquirer";
 import * as fs from "node:fs";
@@ -49,3 +49,7 @@ function listTodos(): void {
 }
 
 listTodos();
+let args = process.argv.slice(2);
+if (args.length > 0 && args[0] === "add") {
+  addTodo();
+}

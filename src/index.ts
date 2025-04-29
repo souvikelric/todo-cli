@@ -3,8 +3,10 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as fs from "node:fs";
 import Table from "cli-table3";
+import * as pt from "node:path";
+import * as os from "node:os";
 
-const dataPath = "todos.json";
+const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 
 export type Todo = {
   name: string;
@@ -35,6 +37,8 @@ function loadTodos(path: string) {
   if (fs.existsSync(path)) {
     todos = JSON.parse(fs.readFileSync(path).toString());
   } else {
+    const dir = pt.dirname(dataPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path, JSON.stringify([], null, 2));
   }
   return todos;
@@ -104,14 +108,11 @@ function listTodos(): void {
     console.log(chalk.yellow("⚠️  No todos found"));
     return;
   }
-  const stringifiedTodos = todos.map((todo) =>
-    Object.fromEntries(Object.entries(todo).map(([k, v]) => [k, String(v)]))
-  );
   console.log("\n📋 Your Todos:\n");
-  //   console.table(stringifiedTodos);
   printTodos(todos);
 }
 
+//console.log(path.resolve(os.homedir(), ".todo-cli", "todos.json"));
 let args = process.argv.slice(2);
 if (args.length > 0 && args[0] === "add") {
   addTodo();

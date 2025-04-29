@@ -16,6 +16,22 @@ export type Todo = {
   tag?: string;
 };
 
+export type Command = {
+  name: string;
+  description: string;
+};
+
+export type CommandList = Command[];
+
+const commands: CommandList = [
+  { name: "list", description: "lists all todos in a table format" },
+  {
+    name: "add",
+    description: "adds a todo by taking the user through interactive prompts",
+  },
+  { name: "clear", description: "Removes all todos" },
+];
+
 function getDate() {
   const today = new Date();
   const yyyy = today.getFullYear();
@@ -46,6 +62,10 @@ function loadTodos(path: string) {
 
 function saveTodos(todos: Todo[]) {
   fs.writeFileSync(dataPath, JSON.stringify(todos, null, 2));
+}
+
+function clearTodos() {
+  saveTodos([]);
 }
 
 async function addTodo(): Promise<void> {
@@ -112,12 +132,34 @@ function listTodos(): void {
   printTodos(todos);
 }
 
+function help(cl: CommandList) {
+  console.log();
+  console.log(chalk.magenta("📋 Below are commands that are supported : "));
+  console.log();
+  cl.forEach((command) => {
+    console.log(chalk.green(command.name + " -- " + command.description));
+  });
+}
+
 //console.log(path.resolve(os.homedir(), ".todo-cli", "todos.json"));
 let args = process.argv.slice(2);
 if (args.length > 0 && args[0] === "add") {
   addTodo();
 } else if (args.length > 0 && args[0] === "list") {
   listTodos();
+  console.log();
+} else if (args.length > 0 && args[0] === "clear") {
+  clearTodos();
+  console.log(chalk.magenta("🔧 All Todos cleared"));
+  console.log();
+} else if (args.length > 0 && args[0] === "help") {
+  help(commands);
+  console.log();
 } else {
-  console.log(chalk.red("❌ Please add a command like list or add"));
+  console.log(
+    chalk.red(
+      "❌ Please add a command. Use todo-cli help to see list of commands and usage"
+    )
+  );
+  console.log();
 }

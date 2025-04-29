@@ -99,6 +99,21 @@ async function addTodo(): Promise<void> {
   console.log(chalk.green("\n✅ Todo added successfully!\n"));
 }
 
+function addTodosParams() {
+  let params = process.argv.slice(3);
+  if (params.includes("-name")) {
+    let nameIndex = params.indexOf("-name");
+    let name = params[nameIndex + 1]?.trim() || null;
+    if (name === null || name === "") {
+      console.log(chalk.red("❌ No value provided for -name argument"));
+      process.exit(1);
+    }
+    console.log(params, name);
+  } else {
+    console.log(chalk.red("❌ Could not find the -name argument"));
+  }
+}
+
 function printTodos(todos: Todo[]) {
   const table = new Table({
     head: ["Name", "Date", "Time", "Priority", "Tag"],
@@ -144,7 +159,11 @@ function help(cl: CommandList) {
 //console.log(path.resolve(os.homedir(), ".todo-cli", "todos.json"));
 let args = process.argv.slice(2);
 if (args.length > 0 && args[0] === "add") {
-  addTodo();
+  if (args.length === 1) {
+    addTodo();
+  } else {
+    addTodosParams();
+  }
 } else if (args.length > 0 && args[0] === "list") {
   listTodos();
   console.log();

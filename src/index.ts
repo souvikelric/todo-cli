@@ -53,7 +53,9 @@ function getTime() {
   const today = new Date();
   const hh = today.getHours();
   const mi = today.getMinutes();
-  return `${hh}:${mi}`;
+  const amPM = hh >= 12 ? "PM" : "AM";
+  const hour12 = hh <= 12 ? hh : hh % 12;
+  return `${hour12}:${mi} ${amPM}`;
 }
 
 function loadTodos(path: string) {
@@ -116,7 +118,32 @@ function addTodosParams() {
       console.log(chalk.red("❌ No value provided for -name argument"));
       process.exit(1);
     }
-    let todo: Todo = { ...defaultValues, name };
+    let priority: Todo["priority"];
+    let prio;
+    if (params.includes("-priority")) {
+      let priorityIndex = params.indexOf("-priority");
+      prio = params[priorityIndex + 1]?.trim();
+      if (!["High", "Medium", "Low"].includes(prio)) {
+        console.log(
+          chalk.red("❌ Incorrect value provided for -priority argument")
+        );
+        process.exit(1);
+      }
+    }
+    priority = (prio as Todo["priority"]) || defaultValues.priority;
+
+    let tag: Todo["tag"];
+    let tagFrom;
+    if (params.includes("-tag")) {
+      let tagIndex = params.indexOf("-tag");
+      tagFrom = params[tagIndex + 1]?.trim();
+      if (tagFrom === "" || tagFrom === null) {
+        console.log(chalk.red("❌ No value provided for -tag argument"));
+        process.exit(1);
+      }
+    }
+    tag = tagFrom || defaultValues.tag;
+    let todo: Todo = { ...defaultValues, name, priority, tag };
     const todos = loadTodos(dataPath);
     todos.push(todo);
     saveTodos(todos);
@@ -131,7 +158,7 @@ function printTodos(todos: Todo[]) {
   const table = new Table({
     head: ["Name", "Date", "Time", "Priority", "Tag"],
     style: {
-      head: ["green"],
+      head: ["cyan"],
       border: ["gray"],
     },
     wordWrap: true,

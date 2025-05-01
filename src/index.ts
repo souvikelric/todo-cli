@@ -5,6 +5,7 @@ import * as fs from "node:fs";
 import Table from "cli-table3";
 import * as pt from "node:path";
 import * as os from "node:os";
+import { filterTodos } from "./utility";
 
 const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 
@@ -117,6 +118,21 @@ async function addTodo(): Promise<void> {
 function addTodosParams() {
   let params = process.argv.slice(3);
   let flags = params.filter((p) => p.startsWith("-"));
+  if (flags.length === 0) {
+    // add todo with the string provided
+    params.forEach((p) => {
+      let name = p;
+      const todos = loadTodos(dataPath);
+      const lastTodoId: number =
+        (todos[todos.length - 1]?.id as number) + 1 || 1;
+      let todo: Todo = { ...defaultValues, name, id: lastTodoId };
+      todos.push(todo);
+      saveTodos(todos);
+    });
+    console.log(chalk.green(`✅ ${params.length} todos added successfully`));
+    console.log();
+    process.exit(1);
+  }
   if (flags.some((f) => !["-name", "-priority", "-tag"].includes(f))) {
     console.log(chalk.red("❌⛳️ Invalid/Unsupported flag provided"));
     process.exit(1);
@@ -227,7 +243,20 @@ function printTodos(todos: Todo[]) {
 }
 
 function listTodos(): void {
-  const todos = loadTodos(dataPath);
+  let todos = loadTodos(dataPath);
+  const filterArgs = process.argv.slice(3);
+  if (filterArgs.length > 0) {
+    const flags = filterArgs.filter((fa) => fa.startsWith("-"));
+    const values = filterArgs.filter((fa) => !fa.startsWith("-"));
+    if (flags.length !== values.length) {
+      console.log();
+      console.log(chalk.red("❌ Values for arguments not provided"));
+      console.log();
+      process.exit(1);
+    }
+    todos = filterTodos(todos, flags, values);
+    console.log("Filter Arguments", filterArgs);
+  }
   if (!todos.length) {
     console.log(chalk.yellow("⚠️  No todos found"));
     return;

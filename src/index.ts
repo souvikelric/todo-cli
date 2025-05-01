@@ -16,6 +16,14 @@ export type Todo = {
   tag?: string;
 };
 
+export const defaultValues: Todo = {
+  name: "",
+  date: getDate(),
+  time: getTime(),
+  priority: "Low",
+  tag: "",
+};
+
 export type Command = {
   name: string;
   description: string;
@@ -108,7 +116,12 @@ function addTodosParams() {
       console.log(chalk.red("❌ No value provided for -name argument"));
       process.exit(1);
     }
-    console.log(params, name);
+    let todo: Todo = { ...defaultValues, name };
+    const todos = loadTodos(dataPath);
+    todos.push(todo);
+    saveTodos(todos);
+
+    console.log(chalk.green("\n✅ Todo added successfully!\n"));
   } else {
     console.log(chalk.red("❌ Could not find the -name argument"));
   }

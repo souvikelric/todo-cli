@@ -9,6 +9,7 @@ import * as os from "node:os";
 const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 
 export type Todo = {
+  id?: number;
   name: string;
   date: string;
   time: string;
@@ -17,6 +18,7 @@ export type Todo = {
 };
 
 export const defaultValues: Todo = {
+  id: 1,
   name: "",
   date: getDate(),
   time: getTime(),
@@ -52,7 +54,7 @@ function getDate() {
 function getTime() {
   const today = new Date();
   const hh = today.getHours();
-  const mi = today.getMinutes();
+  const mi = String(today.getMinutes()).padStart(2, "0");
   const amPM = hh >= 12 ? "PM" : "AM";
   const hour12 = hh <= 12 ? hh : hh % 12;
   return `${hour12}:${mi} ${amPM}`;
@@ -79,7 +81,7 @@ function clearTodos() {
 }
 
 async function addTodo(): Promise<void> {
-  const answers = await inquirer.prompt([
+  const answers: Todo = await inquirer.prompt([
     { name: "name", message: "Todo name:", type: "input" },
     {
       name: "date",
@@ -101,8 +103,11 @@ async function addTodo(): Promise<void> {
     },
     { name: "tag", message: "Tag (optional):", type: "input", default: "" },
   ]);
+  const currTodos = loadTodos(dataPath);
+  const lastTodoId: number = currTodos[currTodos.length - 1]?.id || 0;
 
   const todos = loadTodos(dataPath);
+  answers.id = lastTodoId;
   todos.push(answers as Todo);
   saveTodos(todos);
 
@@ -111,6 +116,11 @@ async function addTodo(): Promise<void> {
 
 function addTodosParams() {
   let params = process.argv.slice(3);
+  let flags = params.filter((p) => p.startsWith("-"));
+  if (flags.some((f) => !["-name", "-priority", "-tag"].includes(f))) {
+    console.log(chalk.red("❌⛳️ Invalid/Unsupported flag provided"));
+    process.exit(1);
+  }
   if (params.includes("-name")) {
     let nameIndex = params.indexOf("-name");
     let name = params[nameIndex + 1]?.trim() || null;
@@ -125,7 +135,7 @@ function addTodosParams() {
       prio = params[priorityIndex + 1]?.trim();
       if (!["High", "Medium", "Low"].includes(prio)) {
         console.log(
-          chalk.red("❌ Incorrect value provided for -priority argument")
+          chalk.red("❌ Incorrect or no value provided for -priority argument")
         );
         process.exit(1);
       }
@@ -143,7 +153,10 @@ function addTodosParams() {
       }
     }
     tag = tagFrom || defaultValues.tag;
-    let todo: Todo = { ...defaultValues, name, priority, tag };
+    const currTodos = loadTodos(dataPath);
+    const lastTodoId: number =
+      (currTodos[currTodos.length - 1]?.id as number) + 1 || 1;
+    let todo: Todo = { ...defaultValues, name, priority, tag, id: lastTodoId };
     const todos = loadTodos(dataPath);
     todos.push(todo);
     saveTodos(todos);
@@ -154,9 +167,40 @@ function addTodosParams() {
   }
 }
 
+// function to delete Todos by Id
+function deleteById(id: number) {
+  let todos: Todo[] = loadTodos(dataPath);
+  if (todos.find((t) => t.id === id) === undefined) {
+    console.log();
+    console.log(chalk.red(`❌ No todo item with id ${id} was found`));
+    console.log();
+    process.exit(1);
+  }
+  let filteredTodos = todos.filter((todo) => todo.id !== id);
+  saveTodos(filteredTodos);
+  console.log(chalk.green(`✅ todo with id ${id} was removed successfully`));
+  console.log();
+}
+
+function deleteByName(name: string) {
+  let todos: Todo[] = loadTodos(dataPath);
+  if (todos.find((t) => t.name === name) === undefined) {
+    console.log();
+    console.log(chalk.red(`❌ No todo item with name ${name} was found`));
+    console.log();
+    process.exit(1);
+  }
+  let filteredTodos = todos.filter((todo) => todo.name !== name);
+  saveTodos(filteredTodos);
+  console.log(
+    chalk.green(`✅ todo with name ${name} was removed successfully`)
+  );
+  console.log();
+}
+
 function printTodos(todos: Todo[]) {
   const table = new Table({
-    head: ["Name", "Date", "Time", "Priority", "Tag"],
+    head: ["Id", "Name", "Date", "Time", "Priority", "Tag"],
     style: {
       head: ["cyan"],
       border: ["gray"],
@@ -166,10 +210,15 @@ function printTodos(todos: Todo[]) {
 
   todos.forEach((todo) => {
     table.push([
+      todo.id,
       todo.name,
       todo.date,
       todo.time,
-      todo.priority,
+      todo.priority === "High"
+        ? chalk.red(todo.priority)
+        : todo.priority === "Medium"
+        ? chalk.yellow(todo.priority)
+        : chalk.greenBright(todo.priority),
       todo.tag || "—",
     ]);
   });
@@ -211,6 +260,13 @@ if (args.length > 0 && args[0] === "add") {
   clearTodos();
   console.log(chalk.magenta("🔧 All Todos cleared"));
   console.log();
+} else if (args.length > 0 && (args[0] === "delete" || args[0] === "del")) {
+  let value = args[1].trim();
+  if (!isNaN(value as any)) {
+    deleteById(Number(value));
+  } else {
+    deleteByName(value);
+  }
 } else if (args.length > 0 && args[0] === "help") {
   help(commands);
   console.log();

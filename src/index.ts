@@ -119,13 +119,13 @@ function addTodosParams() {
   let params = process.argv.slice(3);
   let flags = params.filter((p) => p.startsWith("-"));
   if (flags.length === 0) {
-    // add todo with the string provided
-    params.forEach((p) => {
+    const todos = loadTodos(dataPath);
+    const lastTodoId: number = (todos[todos.length - 1]?.id as number) + 1 || 1;
+    // add todos with the string params provided
+    params.forEach((p, i) => {
       let name = p;
-      const todos = loadTodos(dataPath);
-      const lastTodoId: number =
-        (todos[todos.length - 1]?.id as number) + 1 || 1;
-      let todo: Todo = { ...defaultValues, name, id: lastTodoId };
+
+      let todo: Todo = { ...defaultValues, name, id: lastTodoId + i };
       todos.push(todo);
       saveTodos(todos);
     });

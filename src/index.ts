@@ -5,9 +5,9 @@ import * as fs from "node:fs";
 import Table from "cli-table3";
 import * as pt from "node:path";
 import * as os from "node:os";
-import { filterTodos } from "./utility";
+import { filterTodos, updateTodo } from "./utility";
 
-const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
+export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 
 export type Todo = {
   id?: number;
@@ -61,7 +61,7 @@ function getTime() {
   return `${hour12}:${mi} ${amPM}`;
 }
 
-function loadTodos(path: string) {
+export function loadTodos(path: string) {
   let todos: Todo[] = [];
   if (fs.existsSync(path)) {
     todos = JSON.parse(fs.readFileSync(path).toString());
@@ -73,7 +73,7 @@ function loadTodos(path: string) {
   return todos;
 }
 
-function saveTodos(todos: Todo[]) {
+export function saveTodos(todos: Todo[]) {
   fs.writeFileSync(dataPath, JSON.stringify(todos, null, 2));
 }
 
@@ -242,20 +242,22 @@ function printTodos(todos: Todo[]) {
   console.log(table.toString());
 }
 
-function listTodos(): void {
+export function listTodos(listAll: boolean = true): void {
   let todos = loadTodos(dataPath);
-  const filterArgs = process.argv.slice(3);
-  if (filterArgs.length > 0) {
-    const flags = filterArgs.filter((fa) => fa.startsWith("-"));
-    const values = filterArgs.filter((fa) => !fa.startsWith("-"));
-    if (flags.length !== values.length) {
-      console.log();
-      console.log(chalk.red("❌ Values for arguments not provided"));
-      console.log();
-      process.exit(1);
+  if (!listAll) {
+    const filterArgs = process.argv.slice(3);
+    if (filterArgs.length > 0) {
+      const flags = filterArgs.filter((fa) => fa.startsWith("-"));
+      const values = filterArgs.filter((fa) => !fa.startsWith("-"));
+      if (flags.length !== values.length) {
+        console.log();
+        console.log(chalk.red("❌ Values for arguments not provided"));
+        console.log();
+        process.exit(1);
+      }
+      todos = filterTodos(todos, flags, values);
+      console.log("Filter Arguments", filterArgs);
     }
-    todos = filterTodos(todos, flags, values);
-    console.log("Filter Arguments", filterArgs);
   }
   if (!todos.length) {
     console.log(chalk.yellow("⚠️  No todos found"));
@@ -274,7 +276,6 @@ function help(cl: CommandList) {
   });
 }
 
-//console.log(path.resolve(os.homedir(), ".todo-cli", "todos.json"));
 let args = process.argv.slice(2);
 if (args.length > 0 && args[0] === "add") {
   if (args.length === 1) {
@@ -296,6 +297,14 @@ if (args.length > 0 && args[0] === "add") {
   } else {
     deleteByName(value);
   }
+} else if (args.length > 0 && args[0] === "update") {
+  const updateParams = args.slice(1);
+  if (updateParams.length === 0) {
+    console.log(chalk.red("❌ No todo id/priority found"));
+    console.log();
+    process.exit(1);
+  }
+  updateTodo(updateParams);
 } else if (args.length > 0 && args[0] === "help") {
   help(commands);
   console.log();

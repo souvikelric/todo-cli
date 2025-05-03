@@ -1,6 +1,7 @@
 // function to help with filtering todos
 
-import { Todo } from ".";
+import chalk from "chalk";
+import { dataPath, listTodos, loadTodos, saveTodos, Todo } from ".";
 
 export function filterTodos(
   todos: Todo[],
@@ -14,4 +15,50 @@ export function filterTodos(
     updatedTodos = todos.filter((t) => t[flagValue] === values[idx]);
   });
   return updatedTodos;
+}
+
+export function updateTodo(params: string[]) {
+  if (isNaN(params[0] as any)) {
+    errorMessage("Id provided must be a number");
+  }
+  const updateId = Number(params[0]);
+  const currTodos: Todo[] = loadTodos(dataPath);
+  if (currTodos.find((todo) => todo.id === updateId) === undefined) {
+    errorMessage(`No todo with ${updateId} id found`);
+  }
+  let flagsAndValues = params.slice(1);
+  let flags = flagsAndValues.filter((p) => p.startsWith("-"));
+  let values = flagsAndValues.filter((p) => !p.startsWith("-"));
+  console.log(flags);
+  console.log(values);
+  if (
+    flags.length === 0 ||
+    values.length === 0 ||
+    flags.length !== values.length
+  ) {
+    errorMessage("Flags/Values not provided correctly");
+  }
+  let updatedTodo = currTodos.find((t) => t.id === updateId) as Todo;
+  let priority = (values[flags.indexOf("-priority")] ||
+    updatedTodo?.priority) as Todo["priority"];
+  let tag = values[flags.indexOf("-tag")] || updatedTodo?.tag;
+  updatedTodo = { ...updatedTodo, priority: priority, tag: tag };
+  let todos = [...currTodos.filter((t) => t.id !== updateId), updatedTodo];
+  saveTodos(todos);
+  successMessage("Todos have been updated successfully", false);
+  listTodos(true);
+}
+
+export function errorMessage(message: string) {
+  console.log();
+  console.log(chalk.red(`❌ ${message}`));
+  console.log();
+  process.exit(1);
+}
+
+export function successMessage(message: string, exit: boolean = true) {
+  console.log();
+  console.log(chalk.green(`✅ ${message}`));
+  console.log();
+  exit ? process.exit(1) : "";
 }

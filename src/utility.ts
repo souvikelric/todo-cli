@@ -41,8 +41,10 @@ export function updateTodo(params: string[]) {
   let updatedTodo = currTodos.find((t) => t.id === updateId) as Todo;
   let priority = (values[flags.indexOf("-priority")] ||
     updatedTodo?.priority) as Todo["priority"];
+  let name = (values[flags.indexOf("-name")] ||
+    updatedTodo?.name) as Todo["name"];
   let tag = values[flags.indexOf("-tag")] || updatedTodo?.tag;
-  updatedTodo = { ...updatedTodo, priority: priority, tag: tag };
+  updatedTodo = { ...updatedTodo, name: name, priority: priority, tag: tag };
   let todos = [...currTodos.filter((t) => t.id !== updateId), updatedTodo];
   saveTodos(todos);
   successMessage("Todos have been updated successfully", false);

@@ -1,27 +1,27 @@
 {
-  "name": "todo-cli",
-  "version": "1.0.0",
-  "main": "index.js",
+  "author": "",
   "bin": {
     "todo-cli": "./dist/index.js"
   },
-  "scripts": {
-    "build": "tsc",
-    "start": "ts-node src/index.ts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",
     "inquirer": "^12.5.2"
   },
+  "description": "",
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
     "@types/node": "^22.14.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
-  }
+  },
+  "keywords": [],
+  "license": "ISC",
+  "main": "index.js",
+  "name": "todo-cli",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts"
+  },
+  "version": "1.0.0"
 }

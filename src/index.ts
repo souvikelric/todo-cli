@@ -242,7 +242,7 @@ function printTodos(todos: Todo[]) {
   console.log(table.toString());
 }
 
-export function listTodos(listAll: boolean = true): void {
+export function listTodos(listAll: boolean = false): void {
   let todos = loadTodos(dataPath);
   if (!listAll) {
     const filterArgs = process.argv.slice(3);
@@ -256,7 +256,7 @@ export function listTodos(listAll: boolean = true): void {
         process.exit(1);
       }
       todos = filterTodos(todos, flags, values);
-      console.log("Filter Arguments", filterArgs);
+      // console.log("Filter Arguments", filterArgs);
     }
   }
   if (!todos.length) {
@@ -291,12 +291,15 @@ if (args.length > 0 && args[0] === "add") {
   console.log(chalk.magenta("🔧 All Todos cleared"));
   console.log();
 } else if (args.length > 0 && (args[0] === "delete" || args[0] === "del")) {
-  let value = args[1].trim();
-  if (!isNaN(value as any)) {
-    deleteById(Number(value));
-  } else {
-    deleteByName(value);
-  }
+  let ids = args.slice(1);
+  ids.forEach((id) => {
+    let value = id.trim();
+    if (!isNaN(value as any)) {
+      deleteById(Number(value));
+    } else {
+      deleteByName(value);
+    }
+  });
 } else if (args.length > 0 && args[0] === "update") {
   const updateParams = args.slice(1);
   if (updateParams.length === 0) {

@@ -1,7 +1,7 @@
 // function to help with filtering todos
 
 import chalk from "chalk";
-import { dataPath, listTodos, loadTodos, saveTodos, Todo } from ".";
+import { dataPath, getDate, listTodos, loadTodos, saveTodos, Todo } from ".";
 
 export type FlagValueDict = {
   [index: string]: string[];
@@ -15,6 +15,17 @@ export function filterTodos(
   let updatedTodos: Todo[] = [...todos];
   flags.forEach((f, idx) => {
     const flagValue = f.split("-")[1] as keyof Todo;
+    if (flagValue.toLowerCase() == "date") {
+      if (values[idx] === "today") values[idx] = getDate(new Date());
+      else {
+        let today = new Date();
+        if (!values[idx].startsWith("+")) {
+          values[idx] = "-" + values[idx];
+        }
+        let updatedDate = today.setDate(today.getDate() + Number(values[idx]));
+        values[idx] = getDate(new Date(updatedDate));
+      }
+    }
     updatedTodos = todos.filter((t) => t[flagValue] === values[idx]);
   });
   return updatedTodos;

@@ -21,7 +21,7 @@ export type Todo = {
 export const defaultValues: Todo = {
   id: 1,
   name: "",
-  date: getDate(),
+  date: getDate(new Date()),
   time: getTime(),
   priority: "Low",
   tag: "",
@@ -43,8 +43,8 @@ const commands: CommandList = [
   { name: "clear", description: "Removes all todos" },
 ];
 
-function getDate() {
-  const today = new Date();
+export function getDate(date: Date) {
+  const today = date;
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, "0");
   const dd = String(today.getDate()).padStart(2, "0");
@@ -88,7 +88,7 @@ async function addTodo(): Promise<void> {
       name: "date",
       message: "Date (YYYY-MM-DD):",
       type: "input",
-      default: getDate(),
+      default: getDate(new Date()),
     },
     {
       name: "time",
@@ -256,7 +256,6 @@ export function listTodos(listAll: boolean = false): void {
         process.exit(1);
       }
       todos = filterTodos(todos, flags, values);
-      // console.log("Filter Arguments", filterArgs);
     }
   }
   if (!todos.length) {

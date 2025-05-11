@@ -333,7 +333,7 @@ if (args.length > 0 && args[0] === "add") {
   console.clear();
   console.log(chalk.magentaBright(banner));
   console.log();
-  console.log(chalk.yellow("Version 1.0.0 - by Souvik Roy"));
+  console.log(chalk.yellowBright("Version 1.0.0 - by Souvik Roy"));
   console.log();
   console.log(
     chalk.red(

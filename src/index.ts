@@ -7,6 +7,10 @@ import * as pt from "node:path";
 import * as os from "node:os";
 import { filterTodos, updateTodo } from "./utility";
 
+import { readFileSync } from "fs";
+import { join } from "node:path";
+const banner = readFileSync(join(__dirname, "intro.txt"), "utf8");
+
 export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 
 export type Todo = {
@@ -39,10 +43,19 @@ export type CommandList = Command[];
 const commands: CommandList = [
   { name: "list", description: "lists all todos in a table format" },
   {
+    name: "list -priority High",
+    description: "lists todos by  filering with the property provided",
+  },
+  {
     name: "add",
     description: "adds a todo by taking the user through interactive prompts",
   },
   { name: "clear", description: "Removes all todos" },
+  {
+    name: "update 1 -name 'updated name' -status Completed",
+    description: "updates todo properties by id(s) provided",
+  },
+  { name: "delete/del", description: "deletes todos with id(s) provided" },
 ];
 
 export function getDate(date: Date) {
@@ -317,9 +330,14 @@ if (args.length > 0 && args[0] === "add") {
   help(commands);
   console.log();
 } else {
+  console.clear();
+  console.log(chalk.magentaBright(banner));
+  console.log();
+  console.log(chalk.yellow("Version 1.0.0 - by Souvik Roy"));
+  console.log();
   console.log(
     chalk.red(
-      "❌ Please add a command. Use todo-cli help to see list of commands and usage"
+      "Please add a command. Use todo-cli help to see list of commands and usage"
     )
   );
   console.log();

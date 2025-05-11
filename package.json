@@ -18,7 +18,7 @@
   "keywords": [],
   "license": "ISC",
   "main": "index.js",
-  "name": "todo-cli-app",
+  "name": "@souvikelric/todo-cli",
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts"

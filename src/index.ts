@@ -14,6 +14,7 @@ export type Todo = {
   name: string;
   date: string;
   time: string;
+  status: "Pending" | "Completed";
   priority: "High" | "Medium" | "Low";
   tag?: string;
 };
@@ -21,6 +22,7 @@ export type Todo = {
 export const defaultValues: Todo = {
   id: 1,
   name: "",
+  status: "Pending",
   date: getDate(new Date()),
   time: getTime(),
   priority: "Low",
@@ -102,6 +104,7 @@ async function addTodo(): Promise<void> {
       message: "Priority:",
       choices: ["High", "Medium", "Low"],
     },
+    { name: "status", message: "Status: ", type: "input", default: "Pending" },
     { name: "tag", message: "Tag (optional):", type: "input", default: "" },
   ]);
   const currTodos = loadTodos(dataPath);
@@ -216,7 +219,7 @@ function deleteByName(name: string) {
 
 function printTodos(todos: Todo[]) {
   const table = new Table({
-    head: ["Id", "Name", "Date", "Time", "Priority", "Tag"],
+    head: ["Id", "Name", "Date", "Time", "Status", "Priority", "Tag"],
     style: {
       head: ["cyan"],
       border: ["gray"],
@@ -230,6 +233,9 @@ function printTodos(todos: Todo[]) {
       todo.name,
       todo.date,
       todo.time,
+      todo.status === "Pending"
+        ? chalk.red(todo.status)
+        : chalk.greenBright(todo.status),
       todo.priority === "High"
         ? chalk.red(todo.priority)
         : todo.priority === "Medium"

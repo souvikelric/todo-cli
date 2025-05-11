@@ -110,8 +110,11 @@ export function updateMultipleTodos(params: string[], ids: string[]) {
       let name = (dict["name"] && dict["name"][count]) || todo.name;
       let priority = ((dict["priority"] && dict["priority"][count]) ||
         todo.priority) as Todo["priority"];
+      let status =
+        ((dict["status"] && dict["status"][count]) as Todo["status"]) ||
+        todo.status;
       let tag = (dict["tag"] && dict["tag"][count]) || todo.tag;
-      let updatedTodo = { ...todo, name, priority, tag };
+      let updatedTodo = { ...todo, name, priority, tag, status };
       count += 1;
       return updatedTodo;
     } else {

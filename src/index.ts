@@ -258,7 +258,10 @@ function deleteByName(name: string) {
   console.log();
 }
 
+//Current Change : TableType is now changed to compact
+// need to handle this properly
 function printTodos(todos: Todo[]) {
+  console.log(tableType);
   const table = new Table({
     head:
       tableType === "All"
@@ -275,9 +278,9 @@ function printTodos(todos: Todo[]) {
   todos.forEach((todo) => {
     table.push([
       todo.id,
-      tableType === "All" ? todo.name : "",
+      todo.name,
       tableType === "All" ? todo.date : "",
-      todo.time,
+      tableType === "All" ? todo.time : "",
       todo.status === "Pending"
         ? chalk.red(todo.status)
         : chalk.greenBright(todo.status),

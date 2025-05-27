@@ -3,6 +3,11 @@
   "bin": {
     "todo-cli": "./dist/index.js"
   },
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "dependencies": {
     "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",
@@ -23,5 +28,5 @@
     "build": "tsc",
     "start": "ts-node src/index.ts"
   },
-  "version": "1.0.1"
+  "version": "1.0.3"
 }

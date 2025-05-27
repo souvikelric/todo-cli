@@ -106,3 +106,30 @@ todo-cli del 1
 <li>CRUD operations with ID-based referencing</li>
 
 <li>Built entirely with <span style="color:mediumpurple;">TypeScript</span></li>
+
+## 🧪 Example Workflow
+
+```bash
+# Add a task
+todo-cli add
+
+# List all tasks
+todo-cli list
+
+# Filter only pending tasks
+todo-cli list -status Pending
+
+# Update a task by ID
+todo-cli update 1
+
+# Delete a task by ID
+todo-cli delete 1
+```
+
+# 🧑‍💻 Author
+
+<div style="font-size:20px; background-color:blueviolet; padding:8px; width:50%;border-radius:8px;margin-bottom:20px">@souvikelric</div>
+
+# 📜 License
+
+ISC

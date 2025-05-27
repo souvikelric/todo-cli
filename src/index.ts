@@ -23,6 +23,24 @@ export type Todo = {
   tag?: string;
 };
 
+export const TodoColumns = {
+  id: "ID",
+  name: "Name",
+  date: "Date",
+  time: "Time",
+  status: "Status",
+  priority: "Priority",
+  tag: "Tag",
+};
+
+export const TodoCompactColumns = {
+  id: "ID",
+  name: "Name",
+  status: "Status",
+  priority: "Priority",
+  tag: "Tag",
+};
+
 export const defaultValues: Todo = {
   id: 1,
   name: "",
@@ -32,6 +50,11 @@ export const defaultValues: Todo = {
   priority: "Low",
   tag: "",
 };
+
+export type TableType = "All" | "Compact";
+
+// can be switched between "All" and "Compact"
+export const tableType: TableType = "Compact";
 
 export type Command = {
   name: string;
@@ -49,6 +72,11 @@ const commands: CommandList = [
   {
     name: "add",
     description: "adds a todo by taking the user through interactive prompts",
+  },
+  {
+    name: "add 'Todo1' 'Todo2' 'Todo 3 added' ",
+    description:
+      "adds multiple todos with default values for all other values like current date, current time etc",
   },
   { name: "clear", description: "Removes all todos" },
   {
@@ -232,7 +260,11 @@ function deleteByName(name: string) {
 
 function printTodos(todos: Todo[]) {
   const table = new Table({
-    head: ["Id", "Name", "Date", "Time", "Status", "Priority", "Tag"],
+    head:
+      tableType === "All"
+        ? Object.values(TodoColumns)
+        : Object.values(TodoCompactColumns),
+    // head: ["Id", "Name", "Date", "Time", "Status", "Priority", "Tag"],
     style: {
       head: ["cyan"],
       border: ["gray"],
@@ -243,8 +275,8 @@ function printTodos(todos: Todo[]) {
   todos.forEach((todo) => {
     table.push([
       todo.id,
-      todo.name,
-      todo.date,
+      tableType === "All" ? todo.name : "",
+      tableType === "All" ? todo.date : "",
       todo.time,
       todo.status === "Pending"
         ? chalk.red(todo.status)

@@ -5,7 +5,7 @@ import * as fs from "node:fs";
 import Table from "cli-table3";
 import * as pt from "node:path";
 import * as os from "node:os";
-import { filterTodos, updateTodo } from "./utility";
+import { addTableValues, filterTodos, updateTodo } from "./utility";
 
 import { readFileSync } from "fs";
 import { join } from "node:path";
@@ -54,7 +54,7 @@ export const defaultValues: Todo = {
 export type TableType = "All" | "Compact";
 
 // can be switched between "All" and "Compact"
-export const tableType: TableType = "Compact";
+export let tableType: TableType = "Compact";
 
 export type Command = {
   name: string;
@@ -258,8 +258,7 @@ function deleteByName(name: string) {
   console.log();
 }
 
-//Current Change : TableType is now changed to compact
-// need to handle this properly
+//Current Change : TableType now can be changed, but need to handle persistence of tabletype data change
 function printTodos(todos: Todo[]) {
   console.log(tableType);
   const table = new Table({
@@ -275,23 +274,7 @@ function printTodos(todos: Todo[]) {
     wordWrap: true,
   });
 
-  todos.forEach((todo) => {
-    table.push([
-      todo.id,
-      todo.name,
-      tableType === "All" ? todo.date : "",
-      tableType === "All" ? todo.time : "",
-      todo.status === "Pending"
-        ? chalk.red(todo.status)
-        : chalk.greenBright(todo.status),
-      todo.priority === "High"
-        ? chalk.red(todo.priority)
-        : todo.priority === "Medium"
-        ? chalk.yellow(todo.priority)
-        : chalk.greenBright(todo.priority),
-      todo.tag || "—",
-    ]);
-  });
+  addTableValues(todos, tableType, table);
 
   console.log(table.toString());
 }
@@ -361,6 +344,26 @@ if (args.length > 0 && args[0] === "add") {
     process.exit(1);
   }
   updateTodo(updateParams);
+} else if (args.length > 0 && args[0] === "--tableType") {
+  if (args[1] === "All") {
+    tableType = "All";
+    console.log();
+    console.log(
+      chalk.magentaBright("Table Format changed to 🧩 : ", tableType)
+    );
+    console.log();
+  } else if (args[1] === "Compact") {
+    tableType = "Compact";
+    console.log();
+    console.log(
+      chalk.magentaBright("Table Format changed to 🧩 : ", tableType)
+    );
+    console.log();
+  } else {
+    console.log();
+    console.log(chalk.magentaBright("Current Table Format 🧩 : ", tableType));
+    console.log();
+  }
 } else if (args.length > 0 && args[0] === "help") {
   help(commands);
   console.log();

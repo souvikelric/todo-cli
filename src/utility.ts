@@ -14,6 +14,7 @@ import {
   Todo,
 } from ".";
 import { Table } from "cli-table3";
+import { fileURLToPath } from "url";
 
 export type FlagValueDict = {
   [index: string]: string[];
@@ -25,6 +26,14 @@ export type settings = {
 
 export const defaultSettings: settings = {
   tableType: "Compact",
+};
+
+// function to get current cli versio to show as intro message
+export const getVersion = () => {
+  const data = JSON.parse(
+    fs.readFileSync(pt.resolve(__dirname, "package.json")).toString()
+  );
+  console.log(fileURLToPath(data));
 };
 
 // function to check if settings file exists or not

@@ -10,6 +10,7 @@ import {
   changeTableType,
   checkSettings,
   filterTodos,
+  getVersion,
   updateTodo,
 } from "./utility";
 
@@ -390,6 +391,7 @@ if (args.length > 0 && args[0] === "add") {
   console.log(chalk.magentaBright(banner));
   console.log();
   console.log(chalk.yellowBright("Version 1.0.0 - by Souvik Roy"));
+  getVersion();
   console.log();
   console.log(
     chalk.red(

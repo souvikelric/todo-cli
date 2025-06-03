@@ -1,12 +1,15 @@
 // function to help with filtering todos
 
 import chalk from "chalk";
+import * as pt from "node:path";
+import * as fs from "node:fs";
 import {
   dataPath,
   getDate,
   listTodos,
   loadTodos,
   saveTodos,
+  settingsPath,
   TableType,
   Todo,
 } from ".";
@@ -14,6 +17,34 @@ import { Table } from "cli-table3";
 
 export type FlagValueDict = {
   [index: string]: string[];
+};
+
+export type settings = {
+  tableType: TableType;
+};
+
+export const defaultSettings: settings = {
+  tableType: "Compact",
+};
+
+// function to check if settings file exists or not
+// if it doesnt exist set it to default settings
+export const checkSettings = () => {
+  let settings = defaultSettings;
+  if (fs.existsSync(settingsPath)) {
+    settings = JSON.parse(fs.readFileSync(settingsPath).toString());
+  } else {
+    const dir = pt.dirname(settingsPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify(defaultSettings, null, 2));
+  }
+  return settings;
+};
+
+export const changeTableType = (table: TableType) => {
+  let settings = checkSettings();
+  settings.tableType = table;
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 };
 
 export function filterTodos(

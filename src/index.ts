@@ -5,13 +5,27 @@ import * as fs from "node:fs";
 import Table from "cli-table3";
 import * as pt from "node:path";
 import * as os from "node:os";
-import { addTableValues, filterTodos, updateTodo } from "./utility";
+import {
+  addTableValues,
+  changeTableType,
+  checkSettings,
+  filterTodos,
+  updateTodo,
+} from "./utility";
 
 import { readFileSync } from "fs";
 import { join } from "node:path";
 const banner = readFileSync(join(__dirname, "intro.txt"), "utf8");
 
 export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
+export const settingsPath = pt.resolve(
+  os.homedir(),
+  ".todo-cli",
+  "settings.json"
+);
+
+// check if settings file is available if not create one with settingsPath
+let currentSettings = checkSettings();
 
 export type Todo = {
   id?: number;
@@ -54,7 +68,7 @@ export const defaultValues: Todo = {
 export type TableType = "All" | "Compact";
 
 // can be switched between "All" and "Compact"
-export let tableType: TableType = "Compact";
+export let tableType: TableType = currentSettings.tableType;
 
 export type Command = {
   name: string;
@@ -260,7 +274,7 @@ function deleteByName(name: string) {
 
 //Current Change : TableType now can be changed, but need to handle persistence of tabletype data change
 function printTodos(todos: Todo[]) {
-  console.log(tableType);
+  console.log(currentSettings.tableType);
   const table = new Table({
     head:
       tableType === "All"
@@ -347,6 +361,8 @@ if (args.length > 0 && args[0] === "add") {
 } else if (args.length > 0 && args[0] === "--tableType") {
   if (args[1] === "All") {
     tableType = "All";
+    changeTableType("All");
+    currentSettings = checkSettings();
     console.log();
     console.log(
       chalk.magentaBright("Table Format changed to 🧩 : ", tableType)
@@ -354,6 +370,8 @@ if (args.length > 0 && args[0] === "add") {
     console.log();
   } else if (args[1] === "Compact") {
     tableType = "Compact";
+    changeTableType("Compact");
+    currentSettings = checkSettings();
     console.log();
     console.log(
       chalk.magentaBright("Table Format changed to 🧩 : ", tableType)

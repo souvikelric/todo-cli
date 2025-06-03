@@ -390,8 +390,12 @@ if (args.length > 0 && args[0] === "add") {
   console.clear();
   console.log(chalk.magentaBright(banner));
   console.log();
-  console.log(chalk.yellowBright("Version 1.0.0 - by Souvik Roy"));
-  getVersion();
+  const packageData = getVersion();
+  console.log(
+    chalk.yellowBright(
+      `Version ${packageData.version} - by ${packageData.author}`
+    )
+  );
   console.log();
   console.log(
     chalk.red(

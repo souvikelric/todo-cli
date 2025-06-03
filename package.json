@@ -1,5 +1,5 @@
 {
-  "author": "",
+  "author": "Souvik Roy",
   "bin": {
     "todo-cli": "./dist/index.js"
   },

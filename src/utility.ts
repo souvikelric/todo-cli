@@ -15,6 +15,7 @@ import {
 } from ".";
 import { Table } from "cli-table3";
 import { fileURLToPath } from "url";
+import * as os from "node:os";
 
 export type FlagValueDict = {
   [index: string]: string[];
@@ -30,10 +31,9 @@ export const defaultSettings: settings = {
 
 // function to get current cli versio to show as intro message
 export const getVersion = () => {
-  const data = JSON.parse(
-    fs.readFileSync(pt.resolve(__dirname, "package.json")).toString()
-  );
-  console.log(fileURLToPath(data));
+  const packagePath = pt.resolve(__dirname, "..", "package.json");
+  const data = JSON.parse(fs.readFileSync(packagePath).toString());
+  return data;
 };
 
 // function to check if settings file exists or not

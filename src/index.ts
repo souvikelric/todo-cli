@@ -9,6 +9,7 @@ import {
   addTableValues,
   changeTableType,
   checkSettings,
+  errorMessage,
   filterTodos,
   getVersion,
   updateTodo,
@@ -102,6 +103,22 @@ const commands: CommandList = [
   { name: "delete/del", description: "deletes todos with id(s) provided" },
 ];
 
+// fallback function to show banner and helpful text if no command is provided by the user
+export function showBannerAndHelp() {
+  console.clear();
+  console.log(chalk.magentaBright(banner));
+  console.log();
+  const packageData = getVersion();
+  console.log(
+    chalk.yellowBright(
+      `Version ${packageData.version} - by ${packageData.author}`
+    )
+  );
+  errorMessage(
+    "Please add a command. Use todo-cli help to see list of commands and usage"
+  );
+}
+
 export function getDate(date: Date) {
   const today = date;
   const yyyy = today.getFullYear();
@@ -194,8 +211,7 @@ function addTodosParams() {
     process.exit(1);
   }
   if (flags.some((f) => !["-name", "-priority", "-tag"].includes(f))) {
-    console.log(chalk.red("❌⛳️ Invalid/Unsupported flag provided"));
-    process.exit(1);
+    errorMessage("⛳️ Invalid/Unsupported flag provided");
   }
   if (params.includes("-name")) {
     let nameIndex = params.indexOf("-name");
@@ -247,10 +263,7 @@ function addTodosParams() {
 function deleteById(id: number) {
   let todos: Todo[] = loadTodos(dataPath);
   if (todos.find((t) => t.id === id) === undefined) {
-    console.log();
-    console.log(chalk.red(`❌ No todo item with id ${id} was found`));
-    console.log();
-    process.exit(1);
+    errorMessage(`No todo item with id ${id} was found`);
   }
   let filteredTodos = todos.filter((todo) => todo.id !== id);
   saveTodos(filteredTodos);
@@ -261,10 +274,7 @@ function deleteById(id: number) {
 function deleteByName(name: string) {
   let todos: Todo[] = loadTodos(dataPath);
   if (todos.find((t) => t.name === name) === undefined) {
-    console.log();
-    console.log(chalk.red(`❌ No todo item with name ${name} was found`));
-    console.log();
-    process.exit(1);
+    errorMessage(`No todo item with name ${name} was found`);
   }
   let filteredTodos = todos.filter((todo) => todo.name !== name);
   saveTodos(filteredTodos);
@@ -297,17 +307,14 @@ function printTodos(todos: Todo[]) {
 
 export function listTodos(listAll: boolean = false): void {
   let todos = loadTodos(dataPath);
-  console.log(listAll);
+  // console.log(listAll);
   if (!listAll) {
     const filterArgs = process.argv.slice(3);
     if (filterArgs.length > 0) {
       const flags = filterArgs.filter((fa) => fa.startsWith("-"));
       const values = filterArgs.filter((fa) => !fa.startsWith("-"));
       if (flags.length !== values.length) {
-        console.log();
-        console.log(chalk.red("❌ Values for arguments not provided"));
-        console.log();
-        process.exit(1);
+        errorMessage("Values for arguments not provided");
       }
       todos = filterTodos(todos, flags, values);
     }
@@ -359,9 +366,7 @@ if (args.length > 0 && args[0] === "add") {
 } else if (args.length > 0 && args[0] === "update") {
   const updateParams = args.slice(1);
   if (updateParams.length === 0) {
-    console.log(chalk.red("❌ No todo id/priority found"));
-    console.log();
-    process.exit(1);
+    errorMessage("No todo id/priority found");
   }
   updateTodo(updateParams);
 } else if (args.length > 0 && args[0] === "--tableType") {
@@ -390,22 +395,5 @@ if (args.length > 0 && args[0] === "add") {
   }
 } else if (args.length > 0 && args[0] === "help") {
   help(commands);
-  console.log();
-} else {
-  console.clear();
-  console.log(chalk.magentaBright(banner));
-  console.log();
-  const packageData = getVersion();
-  console.log(
-    chalk.yellowBright(
-      `Version ${packageData.version} - by ${packageData.author}`
-    )
-  );
-  console.log();
-  console.log(
-    chalk.red(
-      "Please add a command. Use todo-cli help to see list of commands and usage"
-    )
-  );
   console.log();
 }

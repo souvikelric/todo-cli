@@ -1,6 +1,7 @@
 // defining the values that each column expects
 // this will allow us to make sure any value other than those allowed will result in an error
 
+import { showBannerAndHelp } from ".";
 import { errorMessage } from "./utility";
 
 const ColumnValues = {
@@ -37,6 +38,13 @@ const commands: CommandSchema = {
 // function to check command entered by user and make sure no invalid args, values or commands are entered
 
 export function checkCommand(args: string[]) {
+  // check if no command is provided by the user
+  // for example the user types > todo-list at the terminal
+  const noCommand = args.length === 0;
+  if (noCommand) {
+    showBannerAndHelp();
+  }
+
   // get all command Names list
   const allCommands = Object.keys(commands);
 

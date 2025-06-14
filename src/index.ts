@@ -168,7 +168,7 @@ async function addTodo(): Promise<void> {
   const lastTodoId: number = currTodos[currTodos.length - 1]?.id || 0;
 
   const todos = loadTodos(dataPath);
-  answers.id = lastTodoId;
+  answers.id = lastTodoId + 1;
   todos.push(answers as Todo);
   saveTodos(todos);
 

@@ -5,8 +5,8 @@ import { showBannerAndHelp } from ".";
 import { errorMessage } from "./utility";
 
 const ColumnValues = {
-  priority: ["high", "medium", "low"],
-  status: ["completed", "pending"],
+  priority: ["High", "Medium", "Low"],
+  status: ["Completed", "Pending"],
 };
 
 // defining the schema that each command will have to maintain
@@ -28,7 +28,9 @@ const commands: CommandSchema = {
   add: {
     args: ["-priority", "-status", "-tag", "-name"],
   },
-  update: {},
+  update: {
+    args: ["-priority", "-status", "-tag", "-name"],
+  },
   delete: {},
   del: {},
   clear: {},

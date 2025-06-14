@@ -25,7 +25,7 @@ const commands: CommandSchema = {
     args: ["-priority", "-status"],
   },
   add: {
-    args: ["-priority", "-status", "-tag"],
+    args: ["-priority", "-status", "-tag", "-name"],
   },
   update: {},
   delete: {},
@@ -48,4 +48,12 @@ export function checkCommand(args: string[]) {
       "Invalid Command. Use todo-list help to check available commands"
     );
   }
+
+  // check if arguments (-args) passed are valid or not
+  const allArgs = args.filter((a) => a.startsWith("-"));
+  allArgs.forEach((arg) => {
+    if (!commands[currentCommand].args?.includes(arg)) {
+      errorMessage("Invalid Argument provided to command " + currentCommand);
+    }
+  });
 }

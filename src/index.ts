@@ -297,7 +297,7 @@ function printTodos(todos: Todo[]) {
 
 export function listTodos(listAll: boolean = false): void {
   let todos = loadTodos(dataPath);
-  // console.log(listAll);
+  console.log(listAll);
   if (!listAll) {
     const filterArgs = process.argv.slice(3);
     if (filterArgs.length > 0) {
@@ -340,7 +340,7 @@ if (args.length > 0 && args[0] === "add") {
     addTodosParams();
   }
 } else if (args.length > 0 && args[0] === "list") {
-  listTodos(true);
+  listTodos();
   console.log();
 } else if (args.length > 0 && args[0] === "clear") {
   clearTodos();

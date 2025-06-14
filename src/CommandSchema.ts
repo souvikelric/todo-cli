@@ -23,9 +23,10 @@ type CommandSchema = {
 const commands: CommandSchema = {
   list: {
     args: ["-priority", "-status"],
-    options: [],
   },
-  add: {},
+  add: {
+    args: ["-priority", "-status", "-tag"],
+  },
   update: {},
   delete: {},
   del: {},

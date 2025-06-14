@@ -1,6 +1,8 @@
 // defining the values that each column expects
 // this will allow us to make sure any value other than those allowed will result in an error
 
+import { errorMessage } from "./utility";
+
 const ColumnValues = {
   priority: ["high", "medium", "low"],
   status: ["completed", "pending"],
@@ -23,10 +25,26 @@ const commands: CommandSchema = {
     args: ["-priority", "-status"],
     options: [],
   },
+  add: {},
+  update: {},
+  delete: {},
+  del: {},
+  clear: {},
+  help: {},
 };
 
 // function to check command entered by user and make sure no invalid args, values or commands are entered
 
 export function checkCommand(args: string[]) {
-  console.log(args);
+  // get all command Names list
+  const allCommands = Object.keys(commands);
+
+  // getting the command name from user's entered command
+  // should be the first element of the args array
+  const currentCommand = args[0];
+  if (!allCommands.includes(currentCommand)) {
+    errorMessage(
+      "Invalid Command. Use todo-list help to check available commands"
+    );
+  }
 }

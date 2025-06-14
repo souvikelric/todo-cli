@@ -16,6 +16,7 @@ import {
 
 import { readFileSync } from "fs";
 import { join } from "node:path";
+import { checkCommand } from "./CommandSchema";
 const banner = readFileSync(join(__dirname, "intro.txt"), "utf8");
 
 export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
@@ -328,6 +329,8 @@ function help(cl: CommandList) {
   });
 }
 
+// parsing commands and args and performing subsequent actions
+
 let args = process.argv.slice(2);
 if (args.length > 0 && args[0] === "add") {
   if (args.length === 1) {
@@ -336,6 +339,7 @@ if (args.length > 0 && args[0] === "add") {
     addTodosParams();
   }
 } else if (args.length > 0 && args[0] === "list") {
+  checkCommand(args);
   listTodos(true);
   console.log();
 } else if (args.length > 0 && args[0] === "clear") {

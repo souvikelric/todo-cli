@@ -56,22 +56,37 @@ export const changeTableType = (table: TableType) => {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 };
 
-export function filterTodos(
-  todos: Todo[],
+// this is a function that takes in lowercase user inputs and changes them to
+// first letter to uppercase -> pending to Pending, low to Low and so on
+export const checkCaseSensitivity = (
   flags: string[],
-  values: string[]
-): Todo[] {
+  values: string[],
+  columnName: string
+) => {
   // check if list is being filtered by -status
   // if so get index and check corresponding index value of values array
-  let statusIndex = flags.indexOf("-status");
+
+  let statusIndex = flags.indexOf(`-${columnName}`);
   if (statusIndex !== -1) {
     let statusValue = values[statusIndex];
     statusValue =
       statusValue.charAt(0).toUpperCase() +
       statusValue.slice(1, statusValue.length);
+
     // after changing the first letter to uppercase, reassign back to values array
     values[statusIndex] = statusValue;
   }
+  return values;
+};
+
+export function filterTodos(
+  todos: Todo[],
+  flags: string[],
+  values: string[]
+): Todo[] {
+  values = checkCaseSensitivity(flags, values, "status");
+  values = checkCaseSensitivity(flags, values, "priority");
+
   let updatedTodos: Todo[] = [...todos];
   flags.forEach((f, idx) => {
     const flagValue = f.split("-")[1] as keyof Todo;

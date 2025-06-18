@@ -299,7 +299,7 @@ function printTodos(todos: Todo[]) {
     },
     wordWrap: true,
     colWidths:
-      tableType === "All" ? [6, 30, 15, 10, 10, 10, 12] : [6, 30, 15, 10, 12],
+      tableType === "All" ? [6, 30, 15, 10, 15, 10, 12] : [6, 30, 15, 10, 12],
   });
 
   addTableValues(todos, tableType, table);

@@ -61,6 +61,17 @@ export function filterTodos(
   flags: string[],
   values: string[]
 ): Todo[] {
+  // check if list is being filtered by -status
+  // if so get index and check corresponding index value of values array
+  let statusIndex = flags.indexOf("-status");
+  if (statusIndex !== -1) {
+    let statusValue = values[statusIndex];
+    statusValue =
+      statusValue.charAt(0).toUpperCase() +
+      statusValue.slice(1, statusValue.length);
+    // after changing the first letter to uppercase, reassign back to values array
+    values[statusIndex] = statusValue;
+  }
   let updatedTodos: Todo[] = [...todos];
   flags.forEach((f, idx) => {
     const flagValue = f.split("-")[1] as keyof Todo;

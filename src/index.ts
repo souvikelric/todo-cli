@@ -388,9 +388,23 @@ if (args.length > 0 && args[0] === "add") {
       chalk.magentaBright("Table Format changed to 🧩 : ", tableType)
     );
     console.log();
+  } else if (args.length > 1) {
+    errorMessage(
+      "Incorrect option passed for tableType, expects 'All' or 'Compact' "
+    );
   } else {
     console.log();
     console.log(chalk.magentaBright("Current Table Format 🧩 : ", tableType));
+    console.log();
+    console.log(
+      chalk.magentaBright("To change Table Format to All use command ") +
+        chalk.yellowBright("--tableType All")
+    );
+    console.log(
+      chalk.magentaBright("To change Table Format to Compact use command ") +
+        chalk.yellowBright("--tableType Compact")
+    );
+
     console.log();
   }
 } else if (args.length > 0 && args[0] === "help") {

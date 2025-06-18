@@ -23,7 +23,7 @@ type CommandSchema = {
 
 const commands: CommandSchema = {
   list: {
-    args: ["-priority", "-status"],
+    args: ["-priority", "-status", "-tag", "-date"],
   },
   add: {
     args: ["-priority", "-status", "-tag", "-name"],
@@ -35,6 +35,7 @@ const commands: CommandSchema = {
   del: {},
   clear: {},
   help: {},
+  "--tableType": {},
 };
 
 // function to check command entered by user and make sure no invalid args, values or commands are entered
@@ -60,7 +61,7 @@ export function checkCommand(args: string[]) {
   }
 
   // check if arguments (-args) passed are valid or not
-  const allArgs = args.filter((a) => a.startsWith("-"));
+  const allArgs = args.filter((a) => a.startsWith("-") && !a.includes("--"));
   allArgs.forEach((arg) => {
     if (!commands[currentCommand].args?.includes(arg)) {
       errorMessage("Invalid Argument provided to command " + currentCommand);

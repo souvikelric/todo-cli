@@ -1,5 +1,3 @@
-// function to help with filtering todos
-
 import chalk from "chalk";
 import * as pt from "node:path";
 import * as fs from "node:fs";
@@ -13,9 +11,7 @@ import {
   TableType,
   Todo,
 } from ".";
-import { Table } from "cli-table3";
-import { fileURLToPath } from "url";
-import * as os from "node:os";
+import Table from "cli-table3";
 
 export type FlagValueDict = {
   [index: string]: string[];
@@ -29,15 +25,12 @@ export const defaultSettings: settings = {
   tableType: "Compact",
 };
 
-// function to get current cli versio to show as intro message
 export const getVersion = () => {
   const packagePath = pt.resolve(__dirname, "..", "package.json");
   const data = JSON.parse(fs.readFileSync(packagePath).toString());
   return data;
 };
 
-// function to check if settings file exists or not
-// if it doesnt exist set it to default settings
 export const checkSettings = () => {
   let settings = defaultSettings;
   if (fs.existsSync(settingsPath)) {
@@ -56,98 +49,41 @@ export const changeTableType = (table: TableType) => {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 };
 
-// this is a function that takes in lowercase user inputs and changes them to
-// first letter to uppercase -> pending to Pending, low to Low and so on
-export const checkCaseSensitivity = (
-  flags: string[],
-  values: string[],
-  columnName: string
-) => {
-  // check if list is being filtered by -status
-  // if so get index and check corresponding index value of values array
-
-  let statusIndex = flags.indexOf(`-${columnName}`);
-  if (statusIndex !== -1) {
-    let statusValue = values[statusIndex];
-    statusValue =
-      statusValue.charAt(0).toUpperCase() +
-      statusValue.slice(1, statusValue.length);
-
-    // after changing the first letter to uppercase, reassign back to values array
-    values[statusIndex] = statusValue;
-  }
-  return values;
-};
-
 export function filterTodos(
   todos: Todo[],
-  flags: string[],
-  values: string[]
+  options: Record<string, string>
 ): Todo[] {
-  values = checkCaseSensitivity(flags, values, "status");
-  values = checkCaseSensitivity(flags, values, "priority");
-
   let updatedTodos: Todo[] = [...todos];
-  flags.forEach((f, idx) => {
-    const flagValue = f.split("-")[1] as keyof Todo;
-    if (flagValue.toLowerCase() == "date") {
-      if (values[idx] === "today") values[idx] = getDate(new Date());
-      else {
-        let today = new Date();
-        if (!values[idx].startsWith("+")) {
-          values[idx] = "-" + values[idx];
-        }
-        let updatedDate = today.setDate(today.getDate() + Number(values[idx]));
-        values[idx] = getDate(new Date(updatedDate));
-      }
-    }
-    updatedTodos = todos.filter((t) => t[flagValue] === values[idx]);
-  });
-  return updatedTodos;
-}
 
-export function updateTodo(params: string[]) {
-  if (isNaN(params[0] as any)) {
-    errorMessage("Id provided must be a number");
+  if (options.status) {
+    let status = options.status;
+    status = status.charAt(0).toUpperCase() + status.slice(1);
+    updatedTodos = updatedTodos.filter((t) => t.status === status);
   }
-  let ids = getIds(params);
-  if (ids.length > 1) {
-    updateMultipleTodos(params, ids);
-  } else {
-    const updateId = Number(params[0]);
-    const currTodos: Todo[] = loadTodos(dataPath);
-    if (currTodos.find((todo) => todo.id === updateId) === undefined) {
-      errorMessage(`No todo with ${updateId} id found`);
-    }
-    let flagsAndValues = params.slice(1);
-    let flags = flagsAndValues.filter((p) => p.startsWith("-"));
-    let values = flagsAndValues.filter((p) => !p.startsWith("-"));
-    if (
-      flags.length === 0 ||
-      values.length === 0 ||
-      flags.length !== values.length
-    ) {
-      errorMessage("Flags/Values not provided correctly");
-    }
-    let updatedTodo = currTodos.find((t) => t.id === updateId) as Todo;
-    let priority = (values[flags.indexOf("-priority")] ||
-      updatedTodo?.priority) as Todo["priority"];
-    let name = (values[flags.indexOf("-name")] ||
-      updatedTodo?.name) as Todo["name"];
-    let tag = values[flags.indexOf("-tag")] || updatedTodo?.tag;
-    updatedTodo = { ...updatedTodo, name: name, priority: priority, tag: tag };
-    // let todos = [...currTodos.filter((t) => t.id !== updateId), updatedTodo];
-    let todos: Todo[] = currTodos.map((todo: Todo) => {
-      if (todo.id === updateId) {
-        return updatedTodo;
-      } else {
-        return { ...todo };
+  if (options.priority) {
+    let priority = options.priority;
+    priority = priority.charAt(0).toUpperCase() + priority.slice(1);
+    updatedTodos = updatedTodos.filter((t) => t.priority === priority);
+  }
+  if (options.tag) {
+    updatedTodos = updatedTodos.filter((t) => t.tag === options.tag);
+  }
+  if (options.date) {
+    let dateVal = options.date;
+    if (dateVal === "today") {
+      dateVal = getDate(new Date());
+    } else {
+      let today = new Date();
+      if (!dateVal.startsWith("+") && !dateVal.startsWith("-")) {
+        dateVal = "-" + dateVal;
       }
-    });
-    saveTodos(todos);
-    successMessage("Todos have been updated successfully", false);
-    listTodos(true);
+      let updatedDate = today.setDate(today.getDate() + Number(dateVal));
+      dateVal = getDate(new Date(updatedDate));
+    }
+    updatedTodos = updatedTodos.filter((t) => t.date === dateVal);
   }
+
+  return updatedTodos;
 }
 
 export function errorMessage(message: string) {
@@ -161,16 +97,21 @@ export function successMessage(message: string, exit: boolean = true) {
   console.log();
   console.log(chalk.green(`✅ ${message}`));
   console.log();
-  exit ? process.exit(1) : "";
+  if (exit) process.exit(0);
 }
 
-export function updateMultipleTodos(params: string[], ids: string[]) {
-  let dict = getFlagsDict(params);
+export function updateMultipleTodosCommander(ids: string[], options: Record<string, string[] | string>) {
+  if (ids.length === 0) errorMessage("No todo id provided");
+
+  let dict: Record<string, string[]> = {};
+  for (let [key, val] of Object.entries(options)) {
+    dict[key] = Array.isArray(val) ? val : [val];
+  }
   let idLength = ids.length;
 
   for (let key of Object.keys(dict)) {
     if (dict[key].length !== idLength && dict[key].length !== 1) {
-      errorMessage("Incorrect number of flags / values and ids passed");
+      errorMessage("Incorrect number of values and ids passed");
     }
     if (dict[key].length === 1 && idLength !== 1) {
       dict[key] = dict[key].concat(
@@ -178,6 +119,7 @@ export function updateMultipleTodos(params: string[], ids: string[]) {
       );
     }
   }
+
   let currTodos = loadTodos(dataPath);
   let count = 0;
   let todos: Todo[] = currTodos.map((todo: Todo) => {
@@ -185,9 +127,15 @@ export function updateMultipleTodos(params: string[], ids: string[]) {
       let name = (dict["name"] && dict["name"][count]) || todo.name;
       let priority = ((dict["priority"] && dict["priority"][count]) ||
         todo.priority) as Todo["priority"];
+      if (typeof priority === "string") {
+         priority = (priority.charAt(0).toUpperCase() + priority.slice(1)) as Todo["priority"];
+      }
       let status =
         ((dict["status"] && dict["status"][count]) as Todo["status"]) ||
         todo.status;
+      if (typeof status === "string") {
+         status = (status.charAt(0).toUpperCase() + status.slice(1)) as Todo["status"];
+      }
       let tag = (dict["tag"] && dict["tag"][count]) || todo.tag;
       let updatedTodo = { ...todo, name, priority, tag, status };
       count += 1;
@@ -196,40 +144,16 @@ export function updateMultipleTodos(params: string[], ids: string[]) {
       return { ...todo };
     }
   });
+
   saveTodos(todos);
   successMessage("Todos have been updated successfully", false);
   listTodos(true);
 }
 
-export function getIds(args: string[]): string[] {
-  let firstFlagIndex = args.findIndex((a) => a.startsWith("-"));
-  let ids = args.slice(0, firstFlagIndex);
-  return ids;
-}
-
-export function getFlagsDict(params: string[]) {
-  let firstFlagIndex = params.findIndex((a) => a.startsWith("-"));
-  let values = params.slice(firstFlagIndex);
-  let dict: FlagValueDict = {};
-  let currKey = "";
-  values.forEach((v) => {
-    if (v.startsWith("-")) {
-      let s = v.split("-")[1];
-      dict[s] = [];
-      currKey = s;
-    } else {
-      dict[currKey].push(v);
-    }
-  });
-  return dict;
-}
-
-// function to add specified column Values to cli Table based on tableType
-
 export function addTableValues(
   todos: Todo[],
   tableType: TableType,
-  table: Table
+  table: any
 ) {
   if (tableType === "All") {
     todos.forEach((todo) => {

@@ -5,6 +5,7 @@ import * as fs from "node:fs";
 import Table from "cli-table3";
 import * as pt from "node:path";
 import * as os from "node:os";
+import { Command } from "commander";
 import {
   addTableValues,
   changeTableType,
@@ -12,13 +13,9 @@ import {
   errorMessage,
   filterTodos,
   getVersion,
-  updateTodo,
+  successMessage,
+  updateMultipleTodosCommander,
 } from "./utility";
-
-import { readFileSync } from "fs";
-import { join } from "node:path";
-import { checkCommand } from "./CommandSchema";
-const banner = readFileSync(join(__dirname, "intro.txt"), "utf8");
 
 export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 export const settingsPath = pt.resolve(
@@ -73,50 +70,11 @@ export type TableType = "All" | "Compact";
 // can be switched between "All" and "Compact"
 export let tableType: TableType = currentSettings.tableType;
 
-export type Command = {
-  name: string;
-  description: string;
-};
-
-export type CommandList = Command[];
-
-const commands: CommandList = [
-  { name: "list", description: "lists all todos in a table format" },
-  {
-    name: "list -priority High",
-    description: "lists todos by  filering with the property provided",
-  },
-  {
-    name: "add",
-    description: "adds a todo by taking the user through interactive prompts",
-  },
-  {
-    name: "add 'Todo1' 'Todo2' 'Todo 3 added' ",
-    description:
-      "adds multiple todos with default values for all other values like current date, current time etc",
-  },
-  { name: "clear", description: "Removes all todos" },
-  {
-    name: "update 1 -name 'updated name' -status Completed",
-    description: "updates todo properties by id(s) provided",
-  },
-  { name: "delete/del", description: "deletes todos with id(s) provided" },
-];
-
-// fallback function to show banner and helpful text if no command is provided by the user
-export function showBannerAndHelp() {
-  console.clear();
-  console.log(chalk.magentaBright(banner));
-  console.log();
-  const packageData = getVersion();
-  console.log(
-    chalk.yellowBright(
-      `Version ${packageData.version} - by ${packageData.author}`
-    )
-  );
-  errorMessage(
-    "Please add a command. Use todo-cli help to see list of commands and usage"
-  );
+let bannerText = "";
+try {
+  bannerText = fs.readFileSync(pt.join(__dirname, "intro.txt"), "utf8");
+} catch (e) {
+  bannerText = "--- TODO CLI ---";
 }
 
 export function getDate(date: Date) {
@@ -155,9 +113,10 @@ export function saveTodos(todos: Todo[]) {
 
 function clearTodos() {
   saveTodos([]);
+  console.log(chalk.magenta("🔧 All Todos cleared\n"));
 }
 
-async function addTodo(): Promise<void> {
+async function addTodoInteractive(): Promise<void> {
   const answers: Todo = await inquirer.prompt([
     { name: "name", message: "Todo name:", type: "input" },
     {
@@ -181,10 +140,9 @@ async function addTodo(): Promise<void> {
     { name: "status", message: "Status: ", type: "input", default: "Pending" },
     { name: "tag", message: "Tag (optional):", type: "input", default: "" },
   ]);
-  const currTodos = loadTodos(dataPath);
-  const lastTodoId: number = currTodos[currTodos.length - 1]?.id || 0;
-
   const todos = loadTodos(dataPath);
+  const lastTodoId: number = todos.length > 0 ? (todos[todos.length - 1].id as number) : 0;
+  
   answers.id = lastTodoId + 1;
   todos.push(answers as Todo);
   saveTodos(todos);
@@ -192,107 +150,63 @@ async function addTodo(): Promise<void> {
   console.log(chalk.green("\n✅ Todo added successfully!\n"));
 }
 
-function addTodosParams() {
-  let params = process.argv.slice(3);
-  let flags = params.filter((p) => p.startsWith("-"));
-  if (flags.length === 0) {
-    const todos = loadTodos(dataPath);
-    const lastTodoId: number = (todos[todos.length - 1]?.id as number) + 1 || 1;
-    // add todos with the string params provided
-    params.forEach((p, i) => {
-      let name = p;
+function addTodosLocally(names: string[], options: any) {
+  let todos = loadTodos(dataPath);
+  const lastTodoId: number = todos.length > 0 ? (todos[todos.length - 1].id as number) : 0;
 
-      let todo: Todo = { ...defaultValues, name, id: lastTodoId + i };
-      todos.push(todo);
-      saveTodos(todos);
-    });
-    console.log(chalk.green(`✅ ${params.length} todos added successfully`));
-    console.log();
-    process.exit(1);
-  }
-  if (flags.some((f) => !["-name", "-priority", "-tag"].includes(f))) {
-    errorMessage("⛳️ Invalid/Unsupported flag provided");
-  }
-  if (params.includes("-name")) {
-    let nameIndex = params.indexOf("-name");
-    let name = params[nameIndex + 1]?.trim() || null;
-    if (name === null || name === "") {
-      console.log(chalk.red("❌ No value provided for -name argument"));
-      process.exit(1);
+  if (options.name) {
+    let priority = options.priority || defaultValues.priority;
+    if (priority) {
+      priority = priority.charAt(0).toUpperCase() + priority.slice(1);
     }
-    let priority: Todo["priority"];
-    let prio;
-    if (params.includes("-priority")) {
-      let priorityIndex = params.indexOf("-priority");
-      prio = params[priorityIndex + 1]?.trim();
-      if (!["High", "Medium", "Low"].includes(prio)) {
-        console.log(
-          chalk.red("❌ Incorrect or no value provided for -priority argument")
-        );
-        process.exit(1);
-      }
+    if (!["High", "Medium", "Low"].includes(priority)) {
+      errorMessage("Incorrect or no value provided for priority argument");
     }
-    priority = (prio as Todo["priority"]) || defaultValues.priority;
-
-    let tag: Todo["tag"];
-    let tagFrom;
-    if (params.includes("-tag")) {
-      let tagIndex = params.indexOf("-tag");
-      tagFrom = params[tagIndex + 1]?.trim();
-      if (tagFrom === "" || tagFrom === null) {
-        console.log(chalk.red("❌ No value provided for -tag argument"));
-        process.exit(1);
-      }
-    }
-    tag = tagFrom || defaultValues.tag;
-    const currTodos = loadTodos(dataPath);
-    const lastTodoId: number =
-      (currTodos[currTodos.length - 1]?.id as number) + 1 || 1;
-    let todo: Todo = { ...defaultValues, name, priority, tag, id: lastTodoId };
-    const todos = loadTodos(dataPath);
+    let tag = options.tag || defaultValues.tag;
+    let todo: Todo = { ...defaultValues, name: options.name, priority, tag, id: lastTodoId + 1 };
     todos.push(todo);
     saveTodos(todos);
-
-    console.log(chalk.green("\n✅ Todo added successfully!\n"));
+    successMessage("Todo added successfully!");
+  } else if (names.length > 0) {
+    names.forEach((name, i) => {
+      let todo: Todo = { ...defaultValues, name, id: lastTodoId + i + 1 };
+      todos.push(todo);
+    });
+    saveTodos(todos);
+    successMessage(`${names.length} todos added successfully`);
   } else {
-    console.log(chalk.red("❌ Could not find the -name argument"));
+    errorMessage("Could not find names or --name argument.");
   }
 }
 
-// function to delete Todos by Id
 function deleteById(id: number) {
   let todos: Todo[] = loadTodos(dataPath);
   if (todos.find((t) => t.id === id) === undefined) {
-    errorMessage(`No todo item with id ${id} was found`);
+    console.log(chalk.red(`❌ No todo item with id ${id} was found`));
+    return;
   }
   let filteredTodos = todos.filter((todo) => todo.id !== id);
   saveTodos(filteredTodos);
-  console.log(chalk.green(`✅ todo with id ${id} was removed successfully`));
-  console.log();
+  console.log(chalk.green(`✅ todo with id ${id} was removed successfully\n`));
 }
 
 function deleteByName(name: string) {
   let todos: Todo[] = loadTodos(dataPath);
   if (todos.find((t) => t.name === name) === undefined) {
-    errorMessage(`No todo item with name ${name} was found`);
+    console.log(chalk.red(`❌ No todo item with name ${name} was found`));
+    return;
   }
   let filteredTodos = todos.filter((todo) => todo.name !== name);
   saveTodos(filteredTodos);
-  console.log(
-    chalk.green(`✅ todo with name ${name} was removed successfully`)
-  );
-  console.log();
+  console.log(chalk.green(`✅ todo with name ${name} was removed successfully\n`));
 }
 
-//Current Change : TableType now can be changed, but need to handle persistence of tabletype data change
 function printTodos(todos: Todo[]) {
-  console.log(currentSettings.tableType);
   const table = new Table({
     head:
       tableType === "All"
         ? Object.values(TodoColumns)
         : Object.values(TodoCompactColumns),
-    // head: ["Id", "Name", "Date", "Time", "Status", "Priority", "Tag"],
     style: {
       head: ["cyan"],
       border: ["gray"],
@@ -303,23 +217,13 @@ function printTodos(todos: Todo[]) {
   });
 
   addTableValues(todos, tableType, table);
-
   console.log(table.toString());
 }
 
-export function listTodos(listAll: boolean = false): void {
+export function listTodos(listAll: boolean = false, options: Record<string, string> = {}): void {
   let todos = loadTodos(dataPath);
-  // console.log(listAll);
-  if (!listAll) {
-    const filterArgs = process.argv.slice(3);
-    if (filterArgs.length > 0) {
-      const flags = filterArgs.filter((fa) => fa.startsWith("-"));
-      const values = filterArgs.filter((fa) => !fa.startsWith("-"));
-      if (flags.length !== values.length) {
-        errorMessage("Values for arguments not provided");
-      }
-      todos = filterTodos(todos, flags, values);
-    }
+  if (!listAll && Object.keys(options).length > 0) {
+     todos = filterTodos(todos, options);
   }
   if (!todos.length) {
     console.log(chalk.yellow("⚠️  No todos found"));
@@ -329,87 +233,83 @@ export function listTodos(listAll: boolean = false): void {
   printTodos(todos);
 }
 
-function help(cl: CommandList) {
-  console.log();
-  console.log(chalk.magenta("📋 Below are commands that are supported : "));
-  console.log();
-  cl.forEach((command) => {
-    console.log(chalk.green(command.name + " -- " + command.description));
+const program = new Command();
+const packageData = getVersion();
+
+program
+  .name("todo-cli")
+  .description(`${chalk.magentaBright(bannerText)}\n\nVersion ${packageData.version} - by ${packageData.author}`)
+  .version(packageData.version)
+  .option("--tableType <type>", "Set table type (All or Compact)", (value) => {
+      if (value === "All" || value === "Compact") {
+        tableType = value;
+        changeTableType(value);
+        console.log(`\n${chalk.magentaBright("Table Format changed to 🧩 : ")} ${tableType}\n`);
+      } else {
+        errorMessage("Incorrect option passed for tableType, expects 'All' or 'Compact'");
+      }
   });
-}
 
-// parsing commands and args and performing subsequent actions
+program
+  .command("list")
+  .description("lists all todos in a table format")
+  .option("-p, --priority <level>", "Filter by priority")
+  .option("-s, --status <state>", "Filter by status")
+  .option("-t, --tag <tag>", "Filter by tag")
+  .option("-d, --date <date>", "Filter by date")
+  .action((options) => {
+    listTodos(false, options);
+  });
 
-let args = process.argv.slice(2);
-checkCommand(args);
-if (args.length > 0 && args[0] === "add") {
-  if (args.length === 1) {
-    addTodo();
-  } else {
-    addTodosParams();
-  }
-} else if (args.length > 0 && args[0] === "list") {
-  listTodos();
-  console.log();
-} else if (args.length > 0 && args[0] === "clear") {
-  clearTodos();
-  console.log(chalk.magenta("🔧 All Todos cleared"));
-  console.log();
-} else if (args.length > 0 && (args[0] === "delete" || args[0] === "del")) {
-  let ids = args.slice(1);
-  ids.forEach((id) => {
-    let value = id.trim();
-    if (!isNaN(value as any)) {
-      deleteById(Number(value));
+program
+  .command("add [names...]")
+  .description("adds a todo by taking the user through interactive prompts or via flags")
+  .option("-n, --name <name>", "Name of the todo")
+  .option("-p, --priority <level>", "Priority of the todo")
+  .option("-t, --tag <tag>", "Tag for the todo")
+  .action(async (names, options) => {
+    if (names.length === 0 && Object.keys(options).length === 0) {
+      await addTodoInteractive();
     } else {
-      deleteByName(value);
+      addTodosLocally(names, options);
     }
   });
-} else if (args.length > 0 && args[0] === "update") {
-  const updateParams = args.slice(1);
-  if (updateParams.length === 0) {
-    errorMessage("No todo id/priority found");
-  }
-  updateTodo(updateParams);
-} else if (args.length > 0 && args[0] === "--tableType") {
-  if (args[1] === "All") {
-    tableType = "All";
-    changeTableType("All");
-    currentSettings = checkSettings();
-    console.log();
-    console.log(
-      chalk.magentaBright("Table Format changed to 🧩 : ", tableType)
-    );
-    console.log();
-  } else if (args[1] === "Compact") {
-    tableType = "Compact";
-    changeTableType("Compact");
-    currentSettings = checkSettings();
-    console.log();
-    console.log(
-      chalk.magentaBright("Table Format changed to 🧩 : ", tableType)
-    );
-    console.log();
-  } else if (args.length > 1) {
-    errorMessage(
-      "Incorrect option passed for tableType, expects 'All' or 'Compact' "
-    );
-  } else {
-    console.log();
-    console.log(chalk.magentaBright("Current Table Format 🧩 : ", tableType));
-    console.log();
-    console.log(
-      chalk.magentaBright("To change Table Format to All use command ") +
-        chalk.yellowBright("--tableType All")
-    );
-    console.log(
-      chalk.magentaBright("To change Table Format to Compact use command ") +
-        chalk.yellowBright("--tableType Compact")
-    );
 
-    console.log();
-  }
-} else if (args.length > 0 && args[0] === "help") {
-  help(commands);
-  console.log();
+program
+  .command("update [ids...]")
+  .description("updates todo properties by id(s) provided")
+  .option("-n, --name [names...]", "Updated name")
+  .option("-p, --priority [priorities...]", "Updated priority")
+  .option("-s, --status [statuses...]", "Updated status")
+  .option("-t, --tag [tags...]", "Updated tag")
+  .action((ids, options) => {
+    updateMultipleTodosCommander(ids, options);
+  });
+
+program
+  .command("delete [ids...]")
+  .alias("del")
+  .description("deletes todos with id(s) or name(s) provided")
+  .action((ids) => {
+    if (ids.length === 0) errorMessage("No id or name provided to delete");
+    ids.forEach((val: string) => {
+      if (!isNaN(Number(val))) {
+        deleteById(Number(val));
+      } else {
+        deleteByName(val);
+      }
+    });
+  });
+
+program
+  .command("clear")
+  .description("Removes all todos")
+  .action(() => {
+    clearTodos();
+  });
+
+program.parse(process.argv);
+
+if (!process.argv.slice(2).length) {
+  program.outputHelp();
 }

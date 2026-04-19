@@ -8,6 +8,7 @@ import {
   getDate,
   getTime,
   defaultValues,
+  TableType,
 } from "../index";
 import { errorMessage, successMessage } from "../utility";
 
@@ -79,5 +80,47 @@ export function addTodosLocally(names: string[], options: any) {
     successMessage(`${names.length} todos added successfully`);
   } else {
     errorMessage("Could not find names or --name argument.");
+  }
+}
+
+export function addTableValues(
+  todos: Todo[],
+  tableType: TableType,
+  table: any,
+) {
+  if (tableType === "All") {
+    todos.forEach((todo) => {
+      table.push([
+        todo.id,
+        todo.name,
+        todo.date,
+        todo.time,
+        todo.status === "Pending"
+          ? chalk.red(todo.status)
+          : chalk.greenBright(todo.status),
+        todo.priority === "High"
+          ? chalk.red(todo.priority)
+          : todo.priority === "Medium"
+            ? chalk.yellow(todo.priority)
+            : chalk.greenBright(todo.priority),
+        todo.tag || "—",
+      ]);
+    });
+  } else {
+    todos.forEach((todo) => {
+      table.push([
+        todo.id,
+        todo.name,
+        todo.status === "Pending"
+          ? chalk.red(todo.status)
+          : chalk.greenBright(todo.status),
+        todo.priority === "High"
+          ? chalk.red(todo.priority)
+          : todo.priority === "Medium"
+            ? chalk.yellow(todo.priority)
+            : chalk.greenBright(todo.priority),
+        todo.tag || "—",
+      ]);
+    });
   }
 }

@@ -4,14 +4,13 @@ import * as fs from "node:fs";
 import {
   dataPath,
   getDate,
-  listTodos,
   loadTodos,
   saveTodos,
   settingsPath,
   TableType,
   Todo,
 } from ".";
-import Table from "cli-table3";
+import { listTodos } from "./commands/list";
 
 export type FlagValueDict = {
   [index: string]: string[];
@@ -51,7 +50,7 @@ export const changeTableType = (table: TableType) => {
 
 export function filterTodos(
   todos: Todo[],
-  options: Record<string, string>
+  options: Record<string, string>,
 ): Todo[] {
   let updatedTodos: Todo[] = [...todos];
 
@@ -100,7 +99,10 @@ export function successMessage(message: string, exit: boolean = true) {
   if (exit) process.exit(0);
 }
 
-export function updateMultipleTodosCommander(ids: string[], options: Record<string, string[] | string>) {
+export function updateMultipleTodosCommander(
+  ids: string[],
+  options: Record<string, string[] | string>,
+) {
   if (ids.length === 0) errorMessage("No todo id provided");
 
   let dict: Record<string, string[]> = {};
@@ -115,7 +117,7 @@ export function updateMultipleTodosCommander(ids: string[], options: Record<stri
     }
     if (dict[key].length === 1 && idLength !== 1) {
       dict[key] = dict[key].concat(
-        new Array(idLength - dict[key].length).fill(dict[key][0])
+        new Array(idLength - dict[key].length).fill(dict[key][0]),
       );
     }
   }
@@ -128,13 +130,15 @@ export function updateMultipleTodosCommander(ids: string[], options: Record<stri
       let priority = ((dict["priority"] && dict["priority"][count]) ||
         todo.priority) as Todo["priority"];
       if (typeof priority === "string") {
-         priority = (priority.charAt(0).toUpperCase() + priority.slice(1)) as Todo["priority"];
+        priority = (priority.charAt(0).toUpperCase() +
+          priority.slice(1)) as Todo["priority"];
       }
       let status =
         ((dict["status"] && dict["status"][count]) as Todo["status"]) ||
         todo.status;
       if (typeof status === "string") {
-         status = (status.charAt(0).toUpperCase() + status.slice(1)) as Todo["status"];
+        status = (status.charAt(0).toUpperCase() +
+          status.slice(1)) as Todo["status"];
       }
       let tag = (dict["tag"] && dict["tag"][count]) || todo.tag;
       let updatedTodo = { ...todo, name, priority, tag, status };
@@ -148,46 +152,4 @@ export function updateMultipleTodosCommander(ids: string[], options: Record<stri
   saveTodos(todos);
   successMessage("Todos have been updated successfully", false);
   listTodos(true);
-}
-
-export function addTableValues(
-  todos: Todo[],
-  tableType: TableType,
-  table: any
-) {
-  if (tableType === "All") {
-    todos.forEach((todo) => {
-      table.push([
-        todo.id,
-        todo.name,
-        todo.date,
-        todo.time,
-        todo.status === "Pending"
-          ? chalk.red(todo.status)
-          : chalk.greenBright(todo.status),
-        todo.priority === "High"
-          ? chalk.red(todo.priority)
-          : todo.priority === "Medium"
-          ? chalk.yellow(todo.priority)
-          : chalk.greenBright(todo.priority),
-        todo.tag || "—",
-      ]);
-    });
-  } else {
-    todos.forEach((todo) => {
-      table.push([
-        todo.id,
-        todo.name,
-        todo.status === "Pending"
-          ? chalk.red(todo.status)
-          : chalk.greenBright(todo.status),
-        todo.priority === "High"
-          ? chalk.red(todo.priority)
-          : todo.priority === "Medium"
-          ? chalk.yellow(todo.priority)
-          : chalk.greenBright(todo.priority),
-        todo.tag || "—",
-      ]);
-    });
-  }
 }

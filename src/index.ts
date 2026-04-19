@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import chalk from "chalk";
-import inquirer from "inquirer";
 import * as fs from "node:fs";
 import Table from "cli-table3";
 import * as pt from "node:path";
@@ -13,15 +12,15 @@ import {
   errorMessage,
   filterTodos,
   getVersion,
-  successMessage,
   updateMultipleTodosCommander,
 } from "./utility";
+import { addTodoInteractive, addTodosLocally } from "./commands/add";
 
 export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 export const settingsPath = pt.resolve(
   os.homedir(),
   ".todo-cli",
-  "settings.json"
+  "settings.json",
 );
 
 // check if settings file is available if not create one with settingsPath
@@ -86,7 +85,7 @@ export function getDate(date: Date) {
   return formattedDate;
 }
 
-function getTime() {
+export function getTime() {
   const today = new Date();
   const hh = today.getHours();
   const mi = String(today.getMinutes()).padStart(2, "0");
@@ -116,69 +115,6 @@ function clearTodos() {
   console.log(chalk.magenta("🔧 All Todos cleared\n"));
 }
 
-async function addTodoInteractive(): Promise<void> {
-  const answers: Todo = await inquirer.prompt([
-    { name: "name", message: "Todo name:", type: "input" },
-    {
-      name: "date",
-      message: "Date (YYYY-MM-DD):",
-      type: "input",
-      default: getDate(new Date()),
-    },
-    {
-      name: "time",
-      message: "Time (HH:MM):",
-      type: "input",
-      default: getTime(),
-    },
-    {
-      type: "list",
-      name: "priority",
-      message: "Priority:",
-      choices: ["High", "Medium", "Low"],
-    },
-    { name: "status", message: "Status: ", type: "input", default: "Pending" },
-    { name: "tag", message: "Tag (optional):", type: "input", default: "" },
-  ]);
-  const todos = loadTodos(dataPath);
-  const lastTodoId: number = todos.length > 0 ? (todos[todos.length - 1].id as number) : 0;
-  
-  answers.id = lastTodoId + 1;
-  todos.push(answers as Todo);
-  saveTodos(todos);
-
-  console.log(chalk.green("\n✅ Todo added successfully!\n"));
-}
-
-function addTodosLocally(names: string[], options: any) {
-  let todos = loadTodos(dataPath);
-  const lastTodoId: number = todos.length > 0 ? (todos[todos.length - 1].id as number) : 0;
-
-  if (options.name) {
-    let priority = options.priority || defaultValues.priority;
-    if (priority) {
-      priority = priority.charAt(0).toUpperCase() + priority.slice(1);
-    }
-    if (!["High", "Medium", "Low"].includes(priority)) {
-      errorMessage("Incorrect or no value provided for priority argument");
-    }
-    let tag = options.tag || defaultValues.tag;
-    let todo: Todo = { ...defaultValues, name: options.name, priority, tag, id: lastTodoId + 1 };
-    todos.push(todo);
-    saveTodos(todos);
-    successMessage("Todo added successfully!");
-  } else if (names.length > 0) {
-    names.forEach((name, i) => {
-      let todo: Todo = { ...defaultValues, name, id: lastTodoId + i + 1 };
-      todos.push(todo);
-    });
-    saveTodos(todos);
-    successMessage(`${names.length} todos added successfully`);
-  } else {
-    errorMessage("Could not find names or --name argument.");
-  }
-}
-
 function deleteById(id: number) {
   let todos: Todo[] = loadTodos(dataPath);
   if (todos.find((t) => t.id === id) === undefined) {
@@ -198,7 +134,9 @@ function deleteByName(name: string) {
   }
   let filteredTodos = todos.filter((todo) => todo.name !== name);
   saveTodos(filteredTodos);
-  console.log(chalk.green(`✅ todo with name ${name} was removed successfully\n`));
+  console.log(
+    chalk.green(`✅ todo with name ${name} was removed successfully\n`),
+  );
 }
 
 function printTodos(todos: Todo[]) {
@@ -220,10 +158,13 @@ function printTodos(todos: Todo[]) {
   console.log(table.toString());
 }
 
-export function listTodos(listAll: boolean = false, options: Record<string, string> = {}): void {
+export function listTodos(
+  listAll: boolean = false,
+  options: Record<string, string> = {},
+): void {
   let todos = loadTodos(dataPath);
   if (!listAll && Object.keys(options).length > 0) {
-     todos = filterTodos(todos, options);
+    todos = filterTodos(todos, options);
   }
   if (!todos.length) {
     console.log(chalk.yellow("⚠️  No todos found"));
@@ -238,16 +179,22 @@ const packageData = getVersion();
 
 program
   .name("todo-cli")
-  .description(`${chalk.magentaBright(bannerText)}\n\nVersion ${packageData.version} - by ${packageData.author}`)
+  .description(
+    `${chalk.magentaBright(bannerText)}\n\nVersion ${packageData.version} - by ${packageData.author}`,
+  )
   .version(packageData.version)
   .option("--tableType <type>", "Set table type (All or Compact)", (value) => {
-      if (value === "All" || value === "Compact") {
-        tableType = value;
-        changeTableType(value);
-        console.log(`\n${chalk.magentaBright("Table Format changed to 🧩 : ")} ${tableType}\n`);
-      } else {
-        errorMessage("Incorrect option passed for tableType, expects 'All' or 'Compact'");
-      }
+    if (value === "All" || value === "Compact") {
+      tableType = value;
+      changeTableType(value);
+      console.log(
+        `\n${chalk.magentaBright("Table Format changed to 🧩 : ")} ${tableType}\n`,
+      );
+    } else {
+      errorMessage(
+        "Incorrect option passed for tableType, expects 'All' or 'Compact'",
+      );
+    }
   });
 
 program
@@ -263,7 +210,9 @@ program
 
 program
   .command("add [names...]")
-  .description("adds a todo by taking the user through interactive prompts or via flags")
+  .description(
+    "adds a todo by taking the user through interactive prompts or via flags",
+  )
   .option("-n, --name <name>", "Name of the todo")
   .option("-p, --priority <level>", "Priority of the todo")
   .option("-t, --tag <tag>", "Tag for the todo")

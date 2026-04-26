@@ -18,16 +18,18 @@ export const defaultSettings: settings = {
   tableType: "Compact",
 };
 
-export const getVersion = () => {
+export const getVersion = async () => {
   const packagePath = pt.resolve(__dirname, "..", "package.json");
-  const data = JSON.parse(fs.readFileSync(packagePath).toString());
+  const data = JSON.parse(await fs.promises.readFile(packagePath, "utf8"));
   return data;
 };
 
-export const checkSettings = () => {
+export const checkSettings = async () => {
   let settings = defaultSettings;
   if (fs.existsSync(settingsPath)) {
-    settings = JSON.parse(fs.readFileSync(settingsPath).toString());
+    settings = JSON.parse(
+      (await fs.promises.readFile(settingsPath)).toString(),
+    );
   } else {
     const dir = pt.dirname(settingsPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -36,10 +38,10 @@ export const checkSettings = () => {
   return settings;
 };
 
-export const changeTableType = (table: TableType) => {
-  let settings = checkSettings();
+export const changeTableType = async (table: TableType) => {
+  let settings = await checkSettings();
   settings.tableType = table;
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  await fs.promises.writeFile(settingsPath, JSON.stringify(settings, null, 2));
 };
 
 export function filterTodos(

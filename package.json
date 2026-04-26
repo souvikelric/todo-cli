@@ -17,7 +17,7 @@
   "description": "",
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
-    "@types/node": "^22.14.1",
+    "@types/node": "^22.19.17",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },

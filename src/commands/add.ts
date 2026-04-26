@@ -1,8 +1,8 @@
 import chalk from "chalk";
 import inquirer from "inquirer";
-import { dataPath, defaultValues } from "../index";
+import { dataPath } from "../index";
 import { loadTodos, saveTodos } from "./todos";
-import { TableType, Todo } from "../types/todoTypes";
+import { TableType, Todo, defaultValues } from "../types/todoTypes";
 import { errorMessage, successMessage, getDate, getTime } from "../utility";
 
 export async function addTodoInteractive(): Promise<void> {

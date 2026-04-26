@@ -1,13 +1,15 @@
 import chalk from "chalk";
-import { dataPath, tableType } from "../index";
-import { filterTodos } from "../utility";
+import { dataPath } from "../index";
+import { checkSettings, filterTodos } from "../utility";
 import Table from "cli-table3";
 import { Todo } from "../types/todoTypes";
 import { loadTodos } from "./todos";
 import { addTableValues } from "./add";
-import { TodoColumns, TodoCompactColumns } from "../index";
+import { TodoColumns, TodoCompactColumns, TableType } from "../types/todoTypes";
 
-function printTodos(todos: Todo[]) {
+async function printTodos(todos: Todo[]) {
+  const tableType = (await checkSettings()).tableType as TableType;
+  console.log(tableType);
   const table = new Table({
     head:
       tableType === "All"

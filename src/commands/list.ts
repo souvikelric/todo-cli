@@ -1,15 +1,11 @@
 import chalk from "chalk";
-import {
-  loadTodos,
-  dataPath,
-  tableType,
-  Todo,
-  TodoColumns,
-  TodoCompactColumns,
-} from "../index";
+import { dataPath, tableType } from "../index";
 import { filterTodos } from "../utility";
 import Table from "cli-table3";
+import { Todo } from "../types/todoTypes";
+import { loadTodos } from "./todos";
 import { addTableValues } from "./add";
+import { TodoColumns, TodoCompactColumns } from "../index";
 
 function printTodos(todos: Todo[]) {
   const table = new Table({

@@ -1,16 +1,10 @@
 import chalk from "chalk";
 import * as pt from "node:path";
 import * as fs from "node:fs";
-import {
-  dataPath,
-  getDate,
-  loadTodos,
-  saveTodos,
-  settingsPath,
-  TableType,
-  Todo,
-} from ".";
+import { dataPath, settingsPath } from ".";
+import { TableType, Todo } from "./types/todoTypes";
 import { listTodos } from "./commands/list";
+import { loadTodos, saveTodos } from "./commands/todos";
 
 export type FlagValueDict = {
   [index: string]: string[];
@@ -152,4 +146,22 @@ export function updateMultipleTodosCommander(
   saveTodos(todos);
   successMessage("Todos have been updated successfully", false);
   listTodos(true);
+}
+
+export function getDate(date: Date) {
+  const today = date;
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  const formattedDate = `${yyyy}-${mm}-${dd}`;
+  return formattedDate;
+}
+
+export function getTime() {
+  const today = new Date();
+  const hh = today.getHours();
+  const mi = String(today.getMinutes()).padStart(2, "0");
+  const amPM = hh >= 12 ? "PM" : "AM";
+  const hour12 = hh <= 12 ? hh : hh % 12;
+  return `${hour12}:${mi} ${amPM}`;
 }

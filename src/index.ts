@@ -13,6 +13,9 @@ import {
 } from "./utility";
 import { addTodoInteractive, addTodosLocally } from "./commands/add";
 import { listTodos } from "./commands/list";
+import { deleteById, deleteByName, clearTodos } from "./commands/todos";
+import { getDate, getTime } from "./utility";
+import { TableType, Todo } from "./types/todoTypes";
 
 export const dataPath = pt.resolve(os.homedir(), ".todo-cli", "todos.json");
 export const settingsPath = pt.resolve(
@@ -21,18 +24,10 @@ export const settingsPath = pt.resolve(
   "settings.json",
 );
 
-// check if settings file is available if not create one with settingsPath
 let currentSettings = checkSettings();
 
-export type Todo = {
-  id?: number;
-  name: string;
-  date: string;
-  time: string;
-  status: "Pending" | "Completed";
-  priority: "High" | "Medium" | "Low";
-  tag?: string;
-};
+// can be switched between "All" and "Compact"
+export let tableType: TableType = currentSettings.tableType;
 
 export const TodoColumns = {
   id: "ID",
@@ -62,79 +57,11 @@ export const defaultValues: Todo = {
   tag: "",
 };
 
-export type TableType = "All" | "Compact";
-
-// can be switched between "All" and "Compact"
-export let tableType: TableType = currentSettings.tableType;
-
 let bannerText = "";
 try {
   bannerText = fs.readFileSync(pt.join(__dirname, "intro.txt"), "utf8");
 } catch (e) {
   bannerText = "--- TODO CLI ---";
-}
-
-export function getDate(date: Date) {
-  const today = date;
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const formattedDate = `${yyyy}-${mm}-${dd}`;
-  return formattedDate;
-}
-
-export function getTime() {
-  const today = new Date();
-  const hh = today.getHours();
-  const mi = String(today.getMinutes()).padStart(2, "0");
-  const amPM = hh >= 12 ? "PM" : "AM";
-  const hour12 = hh <= 12 ? hh : hh % 12;
-  return `${hour12}:${mi} ${amPM}`;
-}
-
-export function loadTodos(path: string) {
-  let todos: Todo[] = [];
-  if (fs.existsSync(path)) {
-    todos = JSON.parse(fs.readFileSync(path).toString());
-  } else {
-    const dir = pt.dirname(dataPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path, JSON.stringify([], null, 2));
-  }
-  return todos;
-}
-
-export function saveTodos(todos: Todo[]) {
-  fs.writeFileSync(dataPath, JSON.stringify(todos, null, 2));
-}
-
-function clearTodos() {
-  saveTodos([]);
-  console.log(chalk.magenta("🔧 All Todos cleared\n"));
-}
-
-function deleteById(id: number) {
-  let todos: Todo[] = loadTodos(dataPath);
-  if (todos.find((t) => t.id === id) === undefined) {
-    console.log(chalk.red(`❌ No todo item with id ${id} was found`));
-    return;
-  }
-  let filteredTodos = todos.filter((todo) => todo.id !== id);
-  saveTodos(filteredTodos);
-  console.log(chalk.green(`✅ todo with id ${id} was removed successfully\n`));
-}
-
-function deleteByName(name: string) {
-  let todos: Todo[] = loadTodos(dataPath);
-  if (todos.find((t) => t.name === name) === undefined) {
-    console.log(chalk.red(`❌ No todo item with name ${name} was found`));
-    return;
-  }
-  let filteredTodos = todos.filter((todo) => todo.name !== name);
-  saveTodos(filteredTodos);
-  console.log(
-    chalk.green(`✅ todo with name ${name} was removed successfully\n`),
-  );
 }
 
 const program = new Command();

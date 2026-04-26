@@ -47,7 +47,7 @@ async function main() {
       console.log(
         `\n${chalk.magentaBright("Table Format changed to 🧩 : ")} ${tableType}\n`,
       );
-      listTodos();
+      await listTodos();
       process.exit(0);
     } else {
       errorMessage(
@@ -65,10 +65,7 @@ async function main() {
       `${chalk.magentaBright(bannerText)}\n\nVersion ${packageData.version} - by ${packageData.author}`,
     )
     .version(packageData.version)
-    .option(
-      "--tableType <type>",
-      "Set table type (All or Compact)",
-    );
+    .option("--tableType <type>", "Set table type (All or Compact)");
 
   program
     .command("list")
@@ -100,12 +97,26 @@ async function main() {
   program
     .command("update [ids...]")
     .description("updates todo properties by id(s) provided")
-    .option("-n, --name [names...]", "Updated name")
-    .option("-p, --priority [priorities...]", "Updated priority")
-    .option("-s, --status [statuses...]", "Updated status")
-    .option("-t, --tag [tags...]", "Updated tag")
+    .option("-n, --name <value>", "Updated name")
+    .option("-p, --priority <value>", "Updated priority")
+    .option("-s, --status <value>", "Updated status")
+    .option("-t, --tag <value>", "Updated tag")
     .action((ids, options) => {
-      updateMultipleTodosCommander(ids, options);
+      // Validate that all options have values
+      const validOptions = ["name", "priority", "status", "tag"];
+      for (const key of validOptions) {
+        if (key in options) {
+          const value = options[key];
+
+          if (
+            value === true ||
+            (typeof value === "string" && value.startsWith("-"))
+          ) {
+            errorMessage(`--${key} requires a valid value`);
+          }
+          updateMultipleTodosCommander(ids, options);
+        }
+      }
     });
 
   program

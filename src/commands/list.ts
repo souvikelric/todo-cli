@@ -28,10 +28,10 @@ async function printTodos(todos: Todo[]) {
   console.log(table.toString());
 }
 
-export function listTodos(
+export async function listTodos(
   listAll: boolean = false,
   options: Record<string, string> = {},
-): void {
+): Promise<void> {
   let todos = loadTodos(dataPath);
   if (!listAll && Object.keys(options).length > 0) {
     todos = filterTodos(todos, options);
@@ -41,5 +41,5 @@ export function listTodos(
     return;
   }
   console.log("\n📋 Your Todos:\n");
-  printTodos(todos);
+  await printTodos(todos);
 }
